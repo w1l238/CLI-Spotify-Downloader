@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>CLI-Spotify-Downloader Web</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/download_style.css') }}" />
-</head>
-<body>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/import_style.css') }}" />
+  </head>
+  <body>
     <div class="bar" id="top-bar">
       <h1 id="Title">
         <a href="{{ url_for('index') }}" id="Title-icon">
@@ -13,16 +13,25 @@
         </a> Downloader
       </h1>
     </div>
-    <div id="download-container">
-      <h2 id="download_text">Download Output</h2>
+    <div id="import-container">
+      <h2 id="import_text">File Import</h2>
     </div>
-    <div class="terminal-wrapper">
+     <form id="download_Form" method="post" action="/import">
+      <div class="input-group" id="bottom-row">
+        <input name="import_Path" type="text" size="55" placeholder="Specify json file path (full path)" required />
+        <button type="submit" class="btn-download">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 64C178.6 64 64 178.6 64 320C64 461.4 178.6 576 320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64zM308.7 451.3L204.7 347.3C200.1 342.7 198.8 335.8 201.2 329.9C203.6 324 209.5 320 216 320L272 320L272 224C272 206.3 286.3 192 304 192L336 192C353.7 192 368 206.3 368 224L368 320L424 320C430.5 320 436.3 323.9 438.8 329.9C441.3 335.9 439.9 342.8 435.3 347.3L331.3 451.3C325.1 457.5 314.9 457.5 308.7 451.3z"/></svg>
+        </button>
+      </div>
+     </form>
+     
+
+  <div class="terminal-wrapper">
     <div id="terminal"></div>
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/terminal_style.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/terminal_style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/terminal_style.css') }}" />
 
     <script>
       const term = new Terminal({
@@ -35,33 +44,32 @@
 
       const socket = io();
 
-      // Fetch song info JSON from your backend API endpoint
-      async function fetchSongInfoAndStartDownload() {
+      // Fetch songs dynamically after page load
+      async function fetchSongsAndStartDownloads() {
         try {
-          const response = await fetch('/api/song_info');
+          const response = await fetch('/api/songs');
           if (!response.ok) {
-            throw new Error('Could not fetch song info');
+            throw new Error(`Failed to fetch songs: ${response.statusText}`);
           }
-          const songInfo = await response.json();
+          const songs_to_download = await response.json();
 
-          if (songInfo.track_url) {
-            socket.emit('start_download', {
-              track_url: songInfo.track_url,
-              download_path: songInfo.download_path,
-              song: songInfo.song,
-              album: songInfo.album,
-              artist: songInfo.artist
+          if (songs_to_download.length > 0) {
+            songs_to_download.forEach(song => {
+              socket.emit('start_loop_download', {
+                track_url: song.track_url,
+                download_path: song.download_path
+              });
             });
-          } else {
-            console.error('Track URL missing in song info');
           }
+          // After triggering downloads, clear server-side session cache
+          await fetch('/api/clear-songs', { method: 'POST' });
         } catch (error) {
-          console.error('Error fetching song info:', error);
+          console.error('Error fetching songs:', error);
         }
       }
 
       socket.on('connect', () => {
-        fetchSongInfoAndStartDownload();
+        fetchSongsAndStartDownloads();
       });
 
       socket.on('stdout', function(msg) {
@@ -93,8 +101,10 @@
     </script>
 
   </div>
+  
 
-  <div id="messages">
+
+    <div id="messages">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <ul>
@@ -105,6 +115,25 @@
         {% endif %}
       {% endwith %}
     </div>
-    
-</body>
+  
+  
+  </body>
 
+
+  <!-- <div id="progress-container" style="width: 100%; background-color: #555; border-radius: 8px; height: 24px; margin: 1rem 0; display: none;">
+    <div id="progress-bar" style="width: 0%; height: 100%; background-color: #4caf50; border-radius: 8px; text-align: center; color: white; line-height: 24px; font-weight: bold;">0%</div>
+  </div> -->
+
+  <!-- html code for messages using flask -->
+  <!-- <div id="messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="messages">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+  </div>
+</html> -->
