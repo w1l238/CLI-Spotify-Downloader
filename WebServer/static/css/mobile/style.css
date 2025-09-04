@@ -1,64 +1,25 @@
 /*  
 * 
 */
-html {
-  height: 100%;
-  /* These properties create the animated gradient */
-  background: linear-gradient(-45deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
-  background-size: 400% 400%;
-  animation: gradient 30s ease infinite;
-}
+
 /* Body style */
 body {
-  min-height: 100%;
-  box-sizing: border-box;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  margin: 0;
-  padding: 2em;
+  background-color: rgb(28, 28, 28);
   max-width: 100%;
   overflow-x: hidden;
-  /* background-color: rgb(28, 28, 28); */
-  background-color: black;
-  animation: fadeIn 1s ease-in-out forwards;
-}
-
-@keyframes fadeIn {
-  0% {
-    background-color: black;
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-@keyframes foregroundFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* Animate the background position */
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-h1, h2, h3, text, button, input {
-  animation: foregroundFadeIn 1s ease forwards;
+  margin: 0rem;
 }
 
 h1, h2, h3, text {
   color: white;
+}
+
+button {
+  background-color: rgb(42, 42, 42);
+  box-sizing: border-box; /* include padding/border in width */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #Title {
@@ -69,14 +30,15 @@ h1, h2, h3, text {
   gap: 0.3em;           /* space between icon and text */
 }
 
+
 #Title-icon {
   display: inline-block;
-  fill: white;
-  width: 42px;
-  height: 42px;
+  fill: rgb(3, 80, 162);
+  width: 84px;
+  height: 84px;
   background-color: transparent;
   border: 0;
-  border-radius: 2rem;
+  border-radius: 3rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -90,22 +52,37 @@ h1, h2, h3, text {
 
 #top-bar {
   display: flex;                  /* activate flex layout */
+  padding: 0rem 1rem 0rem 1rem;
   align-items: center;            /* vertically center items */
-  /* push h2 left and button right */
-  padding: 0.5rem 1rem;           /* optional padding */
-  background-color: transparent;  /* or your desired bg */
+  background-color: rgba(40, 40, 40, 0.8); /* subtle gray */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
+  border-radius: 0rem;
 }
 
-#top-bar h2 {
-  margin: 0;
+#top-bar h1 {
+  margin-top: 3rem;
   font-weight: bold;
-  font-size: 1.5rem;
+  font-size: 5rem;
 }
 
 #top-bar .actions {
+  background-color: transparent;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
+  margin-right: 1rem;
+}
+
+#top-bar button {
+  background-color: rgb(42, 42, 42);
+  border-radius: 5rem;
+  padding: 0.5rem;
+}
+
+#top-bar .actions svg {
+  height: 84px;
+  width: 84px;
+  fill: white;
 }
 
 /* Text input style */
@@ -137,17 +114,39 @@ input:focus {
 form {
   padding-top: 20%;
   padding-bottom: 0%;
-  
+  background-color: transparent;
+}
+
+form#import_Form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* horizontal centering */
+  justify-content: center;  /* vertical centering */
+  min-height: 70vh;         /* at least 70% viewport height */
+  padding-top: 0;           /* remove previous large padding-top */
+  padding-left: 1rem;
+  padding-right: 1rem;
+  background-color: transparent;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Top row of the text input */
 #top-row {
   display: flex;
-  gap: 10px;                /* space between inputs */
-  justify-content: center;  /* center horizontally */
-  width: 100%;              /* or specify max width */
+  flex-direction: column;
+  gap: 2rem;              /* bigger gap between inputs */
+  width: 100%;
+  max-width: 80%;         /* max width to avoid stretching too much on bigger screens */
   margin-bottom: 1.5rem;
-  margin-left: 20px;        /* for centering with icon */
+}
+
+#top-row .input-group input {
+  width: 100%;
+  padding: 1.75rem 2.5rem;     /* bigger padding for easier tapping */
+  font-size: 3rem;       /* bigger font size */
+  border-radius: 3.5rem;    /* slightly bigger rounding */
+  box-sizing: border-box;
 }
 
 
@@ -155,15 +154,44 @@ form {
 
 /* Search button style */
 button.btn-search {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
+  display: flex;               /* use flexbox for alignment */
+  justify-content: center;     /* center content horizontally */
+  align-items: center;         /* center content vertically */
+  gap: 0.5rem;                 /* space between text and SVG */
+  width: auto;                 /* allow button width to adjust for text */
+  min-width: 96px;             /* keep minimum size for tap area */
+  height: 96px;
+  padding: 4rem 2rem 4rem 1.5rem;             /* horizontal padding for comfortable spacing */
+  border-radius: 5rem;         /* rounded pill shape to better fit text + icon */
   cursor: pointer;
-  border-radius: 10rem;
+  border: 0;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  font-size: 3.5rem;           /* adjust font size for readability */
+  color: white;
+  font-weight: 600;
+  margin: 5rem auto 0 auto;
+
+  color: white;
+  outline: none;
+}
+
+button.btn-search svg {
+  width: 60px;
+  height: 60px;
+  fill: white;
+}
+
+button.btn-search:hover,
+button.btn-search:focus {
+  background-color: rgb(3, 80, 162);
+  box-shadow: 
+    0 0 30px rgb(3, 80, 162),       /* bigger glowing shadow on hover */
+    0 0 40px rgb(3, 80, 162);
+  color: white;
 }
 
 /* All Button's hover effect */
-button.btn-search:hover, button.btn-import:hover, button.btn-settings:hover {
+button.btn-import:hover, button.btn-settings:hover {
   background-color: rgb(3, 80, 162);   /* solid blue accent */
   border-color: rgb(3, 80, 162);
   box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
@@ -176,40 +204,13 @@ button.btn-import {
   margin-right: 1rem;
 }
 
-button.btn-search, button.btn-import, button.btn-settings {
+button.btn-import, button.btn-settings {
   fill: white;
-  width: 40px;
-  height: 40px;
   background-color: transparent;
   border: 0;
   border-radius: 2rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-
-form {
-  background-color: transparent;
-}
-
-.btn-browse {
-  display: flex;
-  color: white;
-  font-size: large;
-  font-weight: bold;
-  margin: 0px auto;
-  background-color: rgb(42, 42, 42, 0.8);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  border-radius: 1rem;
-  padding: 6px 1rem 6px 1rem;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-}.btn-browse:hover {
-  background-color: rgb(3, 80, 162);   /* solid blue accent */
-  border-color: rgb(3, 80, 162);
-  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
-  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-
 
 /* FLASH NOTIFICATIONS CSS */
 .error {

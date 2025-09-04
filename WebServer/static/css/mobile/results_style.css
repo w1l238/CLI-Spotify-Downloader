@@ -1,55 +1,13 @@
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   margin: 2em;
+  background-color: rgb(28, 28, 28);
   max-width: 100%;
   overflow-x: hidden;
-  /* background-color: rgb(28, 28, 28); */
-
-  /* These properties create the animated gradient */
-  background: linear-gradient(-45deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
-  background-size: 400% 400%;
-  animation: gradient 30s ease infinite;
 }
 
-/* Animate the background position */
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes foregroundFadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-li, #No-Results {
-  animation: foregroundFadeIn 0.5s ease forwards;
-}
-
-h1, h2, h3, p {
+h1, h2, h3 {
   color: white;
-}
-
-#No-Results{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10rem;
-  color: white;
-
-  font-size: large;
-  font-weight: bold;
 }
 
 #Result-banner {
@@ -57,8 +15,9 @@ h1, h2, h3, p {
   background-color: rgb(42, 42, 42);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  border-radius: 1rem;
-  padding: 6px 1rem 6px 1rem;
+  border-radius: 5rem;
+  font-size: 2rem;
+  padding: 0.5rem 1rem 0.5rem 1rem;
 }
 
 #results-text-container {
@@ -71,18 +30,19 @@ h1, h2, h3, p {
 #Title {
   line-height: 42px;       /* match icon height */
   display: inline-flex;    /* align children horizontally and vertically */
+  flex-grow: 1;
   align-items: center;     /* vertically center items inside h1 */
   gap: 0.3em;              /* space between icon and text */
 }
 
 #Title-icon {
   display: inline-block;
-  fill: white;
-  width: 42px;
-  height: 42px;
+  fill: rgb(3, 80, 162);
+  width: 84px;
+  height: 84px;
   background-color: transparent;
   border: 0;
-  border-radius: 2rem;
+  border-radius: 3rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -94,16 +54,30 @@ h1, h2, h3, p {
   color: white;
 }
 
+#top-bar {
+  display: flex;                  /* activate flex layout */
+  align-items: center;            /* vertically center items */
+  /* push h2 left and button right */
+  padding: 0.5rem 1rem;           /* optional padding */
+  background-color: transparent;  /* or your desired bg */
+}
+
+#top-bar h1 {
+  margin-top: 3rem;
+  font-weight: bold;
+  font-size: 5rem;
+}
+
 li {
   position: relative;
+  font-size: 2rem;
   background-color: rgb(42, 42, 42);
-  padding: 1rem;
-  margin: 1rem 0;          /* vertical margins only */
-  border-radius: 1rem;
+  padding: 1.5rem;
+  margin: 2rem auto;          /* vertical margins only */
+  border-radius: 3rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  width: 100%;            /* full width of ul */
   box-sizing: border-box; /* include padding/border in width */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -144,12 +118,12 @@ li:hover {
 }
 
 button {
-  margin-right: 25px;
+  margin-right: 50px;
   background-color: transparent;
   border-radius: 2rem;
   border: 0;
-  height: 48px;
-  width: 48px;
+  height: 84px;
+  width: 84px;
   fill: white;
   display: flex;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -166,7 +140,7 @@ button:hover {
 ul {
   display: block;  
   align-items: center;
-  width: 80%;
+  width: 95%;
   list-style: none;
   color: white;
   margin: 0 auto;
@@ -174,19 +148,18 @@ ul {
 }
 
 #ul-frame {
-  /* CENTER CHILDREN IN FRAME */
   display: flex;
   justify-content: center;
 }
 
 img {
-  height: 128px;
+  height: 200px;
+  width: 200px;
   width: auto;
   vertical-align: middle;
   margin-right: 10px;
   border-radius: 1rem;
   flex-shrink: 0; /* prevent image from shrinking */
-  max-width: 128px; /* optional, keep proportional size */
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
   border: 1px solid transparent;           /* for smooth border transition */
 }
