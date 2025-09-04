@@ -1,17 +1,26 @@
 # Name: web_server.py
 # Quick Desc: Web server for Spotify DWN
-# Author: 
-# Project Link: 
+# Author: w1l238
+# Project Link: https://github.com/w1l238/CLI-Spotify-Downloader 
 # Desc:
-#
+#   Backend web server for Spotify Downloader
+#   Program is able to:
+#    - Search a song
+#    - Display results
+#    - Download a song
+#    - Import a file to mass download songs
+#    - Show live terminal results
+#    - Edit API keys and path(s)
 
+# Import statements
 import eventlet
 import eventlet.wsgi
 from spotdl import Spotdl
 from urllib.parse import quote_plus
 from flask_socketio import SocketIO, emit
-from flask import Flask, request, render_template, redirect, url_for, flash, get_flashed_messages
+from flask import Flask, request, render_template, redirect, url_for, flash, get_flashed_messages, jsonify, session
 from dotenv import load_dotenv
+from user_agents import parse
 import requests
 import subprocess
 import os
@@ -19,16 +28,18 @@ import re
 import sys
 import json
 
-
-
-
+# Flask app setup
 app = Flask(__name__)
-app.secret_key = "super_secret_key"
+
+# Load key from .env
+app.secret_key = os.getenv("FLASK_SECRET", "SECRET")
 
 # Start the socketIO server to provide terminal output in webviewer
-socketio = SocketIO(app, async_mode='eventlet')
+socketio = SocketIO(app)
 
-
+#=================
+# Helper Functions
+#=================
 
 # Get API token using Client ID and Client Secret
 # If found return the access token
@@ -149,9 +160,10 @@ def sanitize_filename(name):
 # Download a specific song given the song's Spotify URL and the output path
 # If song is found then download it using spotdl
 # Falls back to yt-dlp if spotdl is unable to download due to audio provider error
+# Falls back to yt-dlp if spotdl is unable to download due to audio provider error
 # If spotfl throws error then output that an error occured
 def download_spotify_url(spotify_url, output_folder):
-    
+        
     # Returns the folder where this script is stored
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -166,15 +178,13 @@ def download_spotify_url(spotify_url, output_folder):
     except ValueError:
         # 'CLI-Spotify-Downloader' not found, keep current_dir as is or handle error
         pass
-    
+
+
     # Local FFmpeg path in VENV (as spotdl doesn't place it correctly)
-    if os.name == 'nt': # Windows
-        ffmpeg_path = os.path.join(current_dir, 'venv', 'Scripts', 'ffmpeg.exe')
-    elif os.name != 'nt': # Default to linux if not windows
-        ffmpeg_path = os.path.join(current_dir, 'venv', 'bin', 'ffmpeg')
+    ffmpeg_path = "C:\\Users\\w1l\\dev\\CLI-Spotify-Downloader\\venv\\Lib\\site-packages\\spotdl"
 
     # Spotdl's command to download a song using Spotify's song url
-    command = [sys.executable, "-u", "-m", "spotdl", spotify_url]
+    command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
     
     # Set the output folder for spotdl to use
     if output_folder:
@@ -186,7 +196,6 @@ def download_spotify_url(spotify_url, output_folder):
         # Using popen to capture stdout to pass to front end web viewer
         spotdl_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
 
-
         all_output = ""
 
         # Output stdout to terminal and variable
@@ -195,13 +204,43 @@ def download_spotify_url(spotify_url, output_folder):
             for line in spotdl_process.stdout:
                 # emit it back to the client (front end)
                 print(line, end='')
-                all_output += line
                 socketio.emit('stdout', {'data': line})
                 socketio.sleep(0)
+                all_output += line
+                
 
             # Close the stream
             spotdl_process.stdout.close()
 
+            # Get the return code
+            return_code = spotdl_process.wait()
+
+            # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
+            # if "AudioProviderError" in all_output:
+            yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
+
+            if yt_URL:
+                fallback_url = yt_URL.group(1)
+                print(f"\nUsing fallback URL: {fallback_url}")
+
+                # Download using yt-dlp and convert to mp3 using ffmpeg
+                yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "--ffmpeg-location", ffmpeg_path, "-x", "--audio-format", "mp3", ]
+                    
+                # Call yt-dlp and stream the output to the wbe viewer
+                yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+                # read and show the command's stdout in real time
+                for line in yt_process.stdout:
+                    # emit it back to the client (front end)
+                    print(line, end='')
+                    socketio.emit('stdout', {'data': line})
+                    socketio.sleep(0)
+
+                # Close the stream
+                yt_process.stdout.close()
+            
+                # Get the return code
+                return_code = yt_process.wait()
             # Get the return code
             return_code = spotdl_process.wait()
 
@@ -241,15 +280,6 @@ def download_spotify_url(spotify_url, output_folder):
 
         except Exception as e:
             socketio.emit('download_error', {'message': f"Error during download: {e}"})
-            
-
-    
-    
-
-
-
-
-        
 
     # If the calling of the command throws an error print it
     except subprocess.CalledProcessError as e: 
@@ -264,9 +294,76 @@ def parse_json_file(file_path):
     return data['download_path'], [(s['song_name'], s['artist_name']) for s in data['songs']]
 
 
+# Function that gets new releases from spotify's API to display for the browse feature
+def get_new_releases(access_token, country_code="US", limit=20):
+    """Gets a list of new album releases on Spotify."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"country": country_code, "limit": limit}
+    browse_url = "https://api.spotify.com/v1/browse/new-releases"
+    
+    response = requests.get(browse_url, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        # The result is a list of album objects
+        return response.json().get('albums', {}).get('items', [])
+    
+    print(f"Failed to get new releases: {response.status_code} {response.text}")
+    return None
+
+# Function
+def get_browse_categories(access_token, country_code="US", limit=50):
+    """Gets a list of available genre categories."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"country": country_code, "limit": limit}
+    browse_url = "https://api.spotify.com/v1/browse/categories"
+    
+    response = requests.get(browse_url, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        # The result is a list of category objects, each with an 'id' and 'name'
+        return response.json().get('categories', {}).get('items', [])
+    
+    return None
+
+
+def get_category_playlists(access_token, category_id, country_code="US", limit=20):
+    """Gets playlists for a specific category."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"country": country_code, "limit": limit}
+    browse_url = f"https://api.spotify.com/v1/browse/categories/{category_id}/playlists"
+    
+    response = requests.get(browse_url, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        # The result is a list of playlist objects
+        return response.json().get('playlists', {}).get('items', [])
+        
+    return None
+
+#====================
+# App Route Functions
+#====================
+
+# Backend logic for root page (index.html)
 @app.route("/", methods=["GET", "POST"])
 def index():
     
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/index.html"
+        result_template = "mobile/results.html"
+    else:
+        template = "index.html"
+        result_template = "results.html"
+    # Flash to user's screen type of device for debugging
+    # flash(f"User-Agent: {ua_string}, Selected template: {template}")
+
+
+    # flash((f"Detected User-Agent: {request.headers.get('User-Agent')}"))
+    # flash(f"Rendering template: {template}")
+
     # When user submits the form (AKA searching for a song)
     if request.method == "POST":
 
@@ -290,7 +387,7 @@ def index():
                 
             if not token:
                 flash("Unable to acquire token. Please check API credentials.", "error")
-                return render_template("index.html")
+                return render_template(template)
 
             # Search for the spotify song
             song_data = search_spotify_song(token, song_name, artist_name, 5) # USE ONE FOR TESTING. WILL DEFAULT TO 5
@@ -306,13 +403,13 @@ def index():
                 return redirect(url_for('index'))
             
             # Return the data
-            return render_template('results.html', tracks=valid_tracks, query=f"{song_name} {artist_name}")
+            return render_template(result_template, tracks=valid_tracks, query=f"{song_name} by {artist_name}")
         
         # If the song is unable to be searched for then print error and loop back to main menu
         except Exception as e:
             # Optionally log exception e somewhere for debugging
             flash("Error: Please check your API keys and try again.", "error")
-            print(f"Error Message Code: {e}")
+            flash(f"Error Message Code: {e}")
             return redirect(url_for('index'))
 
         # Else throw error and tell user and return
@@ -320,12 +417,22 @@ def index():
             flash("Song not found. Please try a different title or artist.", "error")
             return redirect(url_for('index'))
 
-    return render_template("index.html")
+    return render_template(template)
 
-# Import page logic
+# Import page logic for import.html
 @app.route('/import', methods=["GET", "POST"])
 def import_page():
     
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/import.html"
+    else:
+        template = "import.html"
+    # Flash to user's screen type of device for debugging
+    # flash(f"User-Agent: {ua_string}, Selected template: {template}")
+
     # On form submission run this if block
     if request.method == "POST":
         print("GOT POST STARTING...")
@@ -353,6 +460,8 @@ def import_page():
         except Exception as e:
             flash(f"Error found: '{e}'")
             songs = []
+
+        song_data_list = [] # List to send to JS
 
         for song_name, artist_name in songs:
             # Generate token for Spotify's API
@@ -385,7 +494,17 @@ def import_page():
 
                     song_path = create_song_folder_structure(dest_path, artist, album, song)
 
-                    socketio.start_background_task(download_spotify_url, url, song_path)
+                    #socketio.start_background_task(download_spotify_url, url, song_path)
+
+                    # List of data to return
+                    song_info = {
+                        'track_url': url,
+                        'download_path': song_path,
+                        'song': song,
+                        'album': album,
+                        'artist': artist
+                    }
+
                 else:
                     flash(f"URL missing for track {track.get('song', 'unknown')} by {track.get('artist', 'unknown')}.")
 
@@ -393,50 +512,335 @@ def import_page():
                 flash(f"An error occurred: {e}")
                 continue  # Continue looping over remaining songs
 
-    return render_template("import_page.html")
+            # Append the song info
+            if song_info:
+                song_data_list.append(song_info)
+                session['song_data_list'] = song_data_list
+                print(f"Appending songs:\n {song_data_list}")
+
+        print("Sending songs_data_list to front-end")
+        return render_template(template)
+
+    return render_template(template)
 
 
-# Search results page logic
+# Search results page logic (results.html)
 @app.route('/results', methods=["GET", "POST"])
 def results():
-    
-    # Store the download path from the user here
-    #download_path = request.form.get("download_Path")
 
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/results.html"
+    else:
+        template = "results.html"
+    # Flash to user's screen type of device for debugging
+    # flash(f"User-Agent: {ua_string}, Selected template: {template}")    
 
     # If the user selects to download a song
     if request.method == "POST":
         
         track_url = request.form.get("track_url")
+        song = request.form.get("song")
+        album = request.form.get("album")
+        artist = request.form.get("artist")
+
+        # Grab download path from .env
+        DWN_PATH = os.getenv("DWN_PATH")
+
+        # Make path if not already there
+        os.makedirs(DWN_PATH, exist_ok=True)
+
+        try:
+            dest_path = set_folder(DWN_PATH)
+        except OSError as e:
+            flash(f"Failed to create or access folder: {e}")
+
+        song_path = create_song_folder_structure(dest_path, artist, album, song)
+
         if not track_url:
             # Tell user that the URL can't be found
             flash("Download URL can't be found/isn't provided", "error")
-            return render_template("results.html")
+            return render_template(template)
         
-        return redirect(url_for('download_page') + f'?track_url={quote_plus(track_url)}')
+        # List of data to return
+        song_info = {
+            'track_url': track_url,
+            'download_path': song_path,
+            'song': song,
+            'album': album,
+            'artist': artist
+        }
 
-@app.route('/download', methods=["GET"])
-def download_page():
-    track_url = request.args.get("track_url")
-    if not track_url:
-        # Flash error if no URL is provided
-        flash("No track URL provided to download", "error")
-        return render_template("download.html")
+        session['song_info'] = song_info
 
-    # Temp variable for testing download pathing
-    CONST_DOWNLOAD_PATH = "INPUT DOWNLOAD PLACE HERE"
-
-    os.makedirs(CONST_DOWNLOAD_PATH, exist_ok=True)
-
-    # Start download using socketio
-    # inside /download route
-    socketio.start_background_task(download_spotify_url, track_url, CONST_DOWNLOAD_PATH)
+        return redirect(url_for('download_page'))
     
-    # Emit to user that is takes time
-    flash("Download task started, please wait...", "message")
-    return render_template('download.html', track_url=track_url, download_path=CONST_DOWNLOAD_PATH)
+    return render_template(template)
 
+# Download backend logic (download.html)
+@app.route('/download', methods=["GET", "POST"])
+def download_page():
+
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/download.html"
+    else:
+        template = "download.html"
+    # Flash to user's screen type of device for debugging
+    # flash(f"User-Agent: {ua_string}, Selected template: {template}")
+
+    # Grab song info (array of everything needed from the song to download)
+    song_info = session.get('song_info', [])
+
+    # Extract the track url from the song array
+    track_url = song_info.get("track_url")
+
+    # If track not found flash error & return
+    if not track_url:
+        flash("No track URL provided to download", "error")
+        return render_template(template)
+    
+    # Else return the page and proceed to download
+    return render_template(template, track_url=track_url)
+
+# Settings backend logic (settings.html)
+@app.route('/settings', methods=["GET", "POST"])
+def settings_page():
+
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/settings.html"
+    else:
+        template = "settings.html"
+    # Flash to user's screen type of device for debugging
+    # flash(f"User-Agent: {ua_string}, Selected template: {template}")
+
+    # Load env variables
+    load_dotenv(override=True)
+
+    # Spotify API Client Credentials
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    DWN_PATH = os.getenv("DWN_PATH")
+    print(f"ID and Secret: {CLIENT_ID}, {CLIENT_SECRET}, Download Path: {DWN_PATH}")
+
+    # When user hits save button
+    if request.method == "POST":
+        # Store input as temp variables
+        form_id = request.form.get("client-id")
+        form_secret = request.form.get("client-secret")
+        form_dwn = request.form.get("dwn_path")
+
+        print(f"Form's ID: {form_id}")
+        print(f"Form Secret: {form_secret}")
+        print(f"Form Dwn Path: {form_dwn}")
+
+        # Check if form data differs from current env values
+        updated = False
+        new_values = {}
+
+        if form_id and form_id != CLIENT_ID:
+            new_values["CLIENT_ID"] = form_id
+            updated = True
+        if form_secret and form_secret != CLIENT_SECRET:
+            new_values["CLIENT_SECRET"] = form_secret
+            updated = True
+        if form_dwn and form_dwn != DWN_PATH:
+            new_values["DWN_PATH"] = form_dwn
+            updated = True
+
+        if updated:
+            # Read existing lines from .env
+            env_path = ".env"
+            lines = []
+            if os.path.exists(env_path):
+                with open(env_path, "r") as f:
+                    lines = f.readlines()
+            
+            # Update lines with new values or add them
+            for key, val in new_values.items():
+                found = False
+                for i, line in enumerate(lines):
+                    if line.strip().startswith(f"{key}="):
+                        lines[i] = f'{key}="{val}"\n'
+                        found = True
+                        break
+                if not found:
+                    lines.append(f'{key}="{val}"\n')
+            
+            # Write back updated .env
+            with open(env_path, "w") as f:
+                f.writelines(lines)
+
+            # Reload the environment variables after updating .env
+            load_dotenv(override=True)
+
+            # Optionally flash a message or redirect after saving
+            flash("Saved Successfully.", "message")
+
+        # Update current values for rendering after possible save
+        CLIENT_ID = form_id
+        CLIENT_SECRET = form_secret
+        DWN_PATH = form_dwn
+
+    # Render template, passing current values to pre-fill inputs
+    return render_template(
+        template,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        dwn_path=DWN_PATH
+    )
+
+
+# Browse logic
+@app.route('/browse', methods=["GET", "POST"])
+def browse():
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/browse.html"
+    else:
+        template = "browse.html"
+
+
+    # Load env variables
+    load_dotenv(override=True)
+
+    # Spotify API Client Credentials
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    print(f"ID and Secret: {CLIENT_ID}, {CLIENT_SECRET}")
+
+    # Generate the token
+    token = generate_token(CLIENT_ID, CLIENT_SECRET)
+        
+    if not token:
+        flash("Unable to acquire token. Please check API credentials.", "error")
+        return render_template(template)
+
+    # --- Process New Releases ---
+    new_releases = get_new_releases(token)
+    release_data = []
+    if new_releases:
+        for release in new_releases:
+            album_name = release.get("name")
+            artists = ", ".join(artist["name"] for artist in release.get("artists", []))
+            release_url = release.get("external_urls", {}).get("spotify")
+            images = release.get("images", [])
+            artwork_url = images[0]["url"] if images else None
+
+            release_data.append({
+                "album": album_name,
+                "artist": artists,
+                "url": release_url,
+                "artwork": artwork_url
+            })
+    else:
+        flash("Could not fetch new releases.", "error")
+
+    # --- Process Browse Categories ---
+    browse_categories = get_browse_categories(token)
+    category_data = []
+    if browse_categories:
+        for category in browse_categories:
+            # The API returns a list of icons, we'll take the first one.
+            icons = category.get("icons", [])
+            icon_url = icons[0]["url"] if icons else None
+            category_data.append({
+                "id": category.get("id"),
+                "name": category.get("name"),
+                "icon": icon_url
+            })
+    else:
+        flash("Could not fetch browse categories.", "error")
+
+    return render_template(
+        template, 
+        new_releases=release_data,
+        browse_categories=category_data
+    )
+
+
+
+#=================
+# Socket IO routes
+# ================
+
+# Start download (passed from js in 'download.html')
+@socketio.on('start_download')
+def handle_start_download(data):
+    
+    # Grab track url passed in
+    track_url = data.get("track_url")
+
+    # If url found then proceed to download
+    if track_url:
+
+        # Grab data passed in
+        song = data.get("song")
+        artist = data.get("artist")
+        album = data.get("album")
+        download_path = data.get("download_path")
+        
+        # Print artist, album, and song
+        print(f"Artist: {artist}, Album: {album}, Song: {song}")
+
+        # Start download using socketio
+        socketio.start_background_task(download_spotify_url, track_url, download_path)
+        
+        # Emit download task started
+        flash("Download task started, please wait...", "message")
+    else:
+        # Emit download error no URL provided
+        flash("No track URL provided to start download", "error")
+
+# Start loop download (called inside a for loop in import.html's JS)
+@socketio.on('start_loop_download')
+def handle_loop_download(data):
+
+    # Grab track url passed in
+    track_url = data.get("track_url")
+
+    # Grab download path passed in
+    download_path = data.get("download_path")
+
+    # print(f"Track URL passed in and Download_path is: {track_url} && {download_path}")
+    socketio.start_background_task(download_spotify_url, track_url, download_path)
+
+
+# ==========
+# API Routes
+# ==========
+
+# API to jsonify all songs that querys from 'import.html'
+@app.route('/api/songs')
+def get_songs_api():
+    songs = session.get('song_data_list', [])
+    return jsonify(songs)
+
+# API to jsonify one song that querys from 'download.html' (which is the song selected from 'results.html')
+@app.route('/api/song_info')
+def get_song_info():
+    song_info = session.get('song_info')
+    if song_info is None:
+        return jsonify({'error': 'No song info found'}), 404
+    else:
+        return jsonify(song_info)
+
+# API to clear backend session (to prevent page reload on 'download.html/import.html'to rerun command)
+@app.route('/api/clear-songs', methods=['POST'])
+def clear_songs():
+    print("Clearing import session...")
+    session.pop('song_data_list', None)
+    return '', 204
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
