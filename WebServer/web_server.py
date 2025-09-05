@@ -181,7 +181,7 @@ def download_spotify_url(spotify_url, output_folder):
 
 
     # Local FFmpeg path in VENV (as spotdl doesn't place it correctly)
-    ffmpeg_path = "C:\\Users\\w1l\\dev\\CLI-Spotify-Downloader\\venv\\Lib\\site-packages\\spotdl"
+    ffmpeg_path = "ENTER_PATH_HERE"
 
     # Spotdl's command to download a song using Spotify's song url
     command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
@@ -212,6 +212,52 @@ def download_spotify_url(spotify_url, output_folder):
             # Close the stream
             spotdl_process.stdout.close()
 
+            # Get the return code
+            return_code = spotdl_process.wait()
+
+            # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
+            # if "AudioProviderError" in all_output:
+            yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
+
+            if yt_URL:
+                fallback_url = yt_URL.group(1)
+                print(f"\nUsing fallback URL: {fallback_url}")
+
+                # Local FFmpeg path in VENV (as spotdl doesn't place it correctly)
+                print("[OS] Scanning Device Operating System...")
+                if os.name == 'nt': # Windows
+                    print("[OS] Device running Windows.")
+                    ffmpeg_path = os.path.join(current_dir, 'venv', 'Scripts', 'ffmpeg.exe')
+                elif os.name != 'nt': # Default to linux if not windows
+                    print("[OS] Device running UNIX")
+                    ffmpeg_path = os.path.join(current_dir, 'venv', 'bin', 'ffmpeg')
+
+                # Check if ffmpeg path is valid
+                if os.path.isfile(ffmpeg_path) or os.access(ffmpeg_path, os.X_OK):
+                    # Download using yt-dlp and convert to mp3 using ffmpeg
+                    yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3", "--ffmpeg-location", ffmpeg_path]
+                else:
+                    # Warn user that ffmpeg isn't found
+                    print("[WARN] ffmpeg package not found. Continuing to download without ffmpeg...")
+           
+                    # Download using yt-dlp and attempt to convert to mp3 without ffmpeg 
+                    yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3"]
+                    
+                # Call yt-dlp and stream the output to the wbe viewer
+                yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+                # read and show the command's stdout in real time
+                for line in yt_process.stdout:
+                    # emit it back to the client (front end)
+                    print(line, end='')
+                    socketio.emit('stdout', {'data': line})
+                    socketio.sleep(0)
+
+                # Close the stream
+                yt_process.stdout.close()
+            
+                # Get the return code
+                return_code = yt_process.wait()
             # Get the return code
             return_code = spotdl_process.wait()
 
@@ -293,6 +339,9 @@ def parse_json_file(file_path):
         data = json.load(f)
     return data['download_path'], [(s['song_name'], s['artist_name']) for s in data['songs']]
 
+#====================
+# App Route Functions
+#====================
 
 # Function that gets new releases from spotify's API to display for the browse feature
 def get_new_releases(access_token, country_code="US", limit=20):
