@@ -94,6 +94,7 @@ h1, h2, h3, text {
   /* push h2 left and button right */
   padding: 0.5rem 1rem;           /* optional padding */
   background-color: transparent;  /* or your desired bg */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 #top-bar h2 {
@@ -114,13 +115,13 @@ input {
   margin-left: auto;
   margin-right: auto;
   text-align: left;
-  background-color: rgba(55, 55, 55, 0.9); /* subtle gray */
+  background-color: rgba(55, 55, 55, 0.35); /* subtle gray */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
   color: white;
-  border-radius: 1rem;
+  border-radius: 2rem;
   border: 0px;
-  padding: 8px 1rem 8px 1rem;
+  padding: 12px 1rem 12px 1rem;
   font-size: medium;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -160,6 +161,7 @@ button.btn-search {
   align-items: center;
   cursor: pointer;
   border-radius: 10rem;
+  margin-top: 3px;
 }
 
 /* All Button's hover effect */
@@ -196,11 +198,12 @@ form {
   font-size: large;
   font-weight: bold;
   margin: 0px auto;
-  background-color: rgb(42, 42, 42, 0.8);
+  background-color: rgb(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  border-radius: 1rem;
-  padding: 6px 1rem 6px 1rem;
+  border-radius: 2rem;
+  /* padding: 6px 1rem 6px 1rem; */
+  padding: 0.7rem 1.5rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }.btn-browse:hover {
   background-color: rgb(3, 80, 162);   /* solid blue accent */

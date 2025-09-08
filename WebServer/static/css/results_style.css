@@ -33,6 +33,15 @@ body {
   }
 }
 
+#top-bar {
+  display: flex;                  /* activate flex layout */
+  align-items: center;            /* vertically center items */
+  /* push h2 left and button right */
+  padding: 0.5rem 1rem;           /* optional padding */
+  background-color: transparent;  /* or your desired bg */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
 li, #No-Results {
   animation: foregroundFadeIn 0.5s ease forwards;
 }
@@ -54,7 +63,7 @@ h1, h2, h3, p {
 
 #Result-banner {
   display: inline-block;
-  background-color: rgb(42, 42, 42);
+  background-color: rgba(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
   border-radius: 1rem;
@@ -96,7 +105,7 @@ h1, h2, h3, p {
 
 li {
   position: relative;
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(42, 42, 42, 0.35);
   padding: 1rem;
   margin: 1rem 0;          /* vertical margins only */
   border-radius: 1rem;
@@ -111,7 +120,7 @@ li {
 }
 
 li:hover {
-  background-color: rgb(58, 58, 58);               /* Slightly lighter background */
+  background-color: rgb(58, 58, 58, 0.5);               /* Slightly lighter background */
   border-color: rgba(3, 80, 162, 0.8);             /* Blue-ish border on hover */
   box-shadow: 0 6px 12px rgba(3, 80, 162, 0.6);    /* Blue glow shadow */
   transform: translateY(-4px);                      /* Subtle lift effect */

@@ -33,6 +33,15 @@ body {
   }
 }
 
+#top-bar {
+  display: flex;                  /* activate flex layout */
+  align-items: center;            /* vertically center items */
+  /* push h2 left and button right */
+  padding: 0.5rem 1rem;           /* optional padding */
+  background-color: transparent;  /* or your desired bg */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
 li, #No-Results {
   animation: foregroundFadeIn 0.5s ease forwards;
 }
@@ -101,7 +110,7 @@ li {
   gap: 0.5rem; /* Space between image and text */
   max-width: 200px; /* Set max-width to the width of the image */
 
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(42, 42, 42, 0.25);
   padding: 1rem;
   border-radius: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
@@ -113,7 +122,7 @@ li {
 }
 
 li:hover {
-  background-color: rgb(58, 58, 58);               /* Slightly lighter background */
+  background-color: rgb(58, 58, 58, 0.7);               /* Slightly lighter background */
   border-color: rgba(3, 80, 162, 0.8);             /* Blue-ish border on hover */
   box-shadow: 0 6px 12px rgba(3, 80, 162, 0.6);    /* Blue glow shadow */
   transform: translateY(-4px) scale(1.02);          /* Subtle lift and scale effect */
@@ -280,7 +289,6 @@ li { border: 2px solid blue; } */
   font-size: 1.2rem;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   animation: foregroundFadeIn 0.5s ease forwards;
 }
 

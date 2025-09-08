@@ -29,6 +29,15 @@ body {
   }
 }
 
+@keyframes foregroundFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 h1, h2, h3, text {
   color: white;
 }
@@ -65,6 +74,7 @@ h1, h2, h3, text {
   justify-content: space-between; /* push h2 left and button right */
   padding: 0.5rem 1rem;           /* optional padding */
   background-color: transparent;  /* or your desired bg */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 
@@ -80,15 +90,16 @@ input {
   display: block;
   margin-right: 1rem;
   text-align: left;
-  background-color: rgba(55, 55, 55, 0.9); /* subtle gray */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
+  background-color: rgba(55, 55, 55, 0.35);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
   border-radius: 1rem;
   border: 0px;
   padding: 8px 1rem 8px 1rem;
   font-size: medium;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  animation: foregroundFadeIn 1s ease forwards;
 }
 
 input:focus {
@@ -125,11 +136,12 @@ button.btn-download {
   fill: white;
   background-color: transparent;
   fill: white;
-  border-radius: 1rem;
+  border-radius: 2rem;
   border: 0px;
   height: 40px;
   width: 40px;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  animation: foregroundFadeIn 1s ease forwards;
 }
 
 button.btn-download:hover {
@@ -169,6 +181,7 @@ button.btn-download:hover {
   margin: 0 auto;            /* Center horizontally */
   white-space: pre-wrap; /* Wrap long lines, respect whitespace */
   word-break: break-word; /* Break long words if necessary */
+  animation: foregroundFadeIn 1s ease forwards;
 }
 
 /* To make terminal rounded (also do so for #terminal) */
@@ -216,9 +229,10 @@ button.btn-download:hover {
   text-align: center;
   margin: 1rem auto;
   padding-bottom: 1rem;
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  border-radius: 1rem;
+  border-radius: 2rem;
   padding: 6px 1rem 6px 1rem;
+  animation: foregroundFadeIn 1s ease forwards;
 }
