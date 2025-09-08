@@ -1,0 +1,208 @@
+/* Inherit base styles for consistency */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 2rem;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: linear-gradient(-45deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
+  background-size: 400% 400%;
+  animation: gradient 30s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes foregroundFadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+h1, h2, h3, p, a {
+  color: white;
+  text-decoration: none;
+}
+
+button {
+  background-color: rgb(42, 42, 42, 0.35);
+  box-sizing: border-box; /* include padding/border in width */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#Title {
+  line-height: 42px;    /* match icon height */
+  display: flex;        /* align children horizontally and vertically */
+  flex-grow: 1;         /* Make Title fill horizontal space */
+  align-items: center;  /* vertically center items inside h1 */
+  gap: 0.3em;           /* space between icon and text */
+}
+
+
+#Title-icon {
+  display: inline-block;
+  fill: white;
+  width: 84px;
+  height: 84px;
+  margin-top: 10px;
+  padding: 0.2rem;
+  border: 0;
+  border-radius: 5rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+#Title-icon:hover {
+  background-color: rgb(3, 80, 162);   /* solid blue accent */
+  border-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
+  fill: white;                        /* keep svg white on hover */
+  color: white;
+}
+
+#top-bar {
+  display: flex;                  /* activate flex layout */
+  padding: 0.5rem 1rem;
+  align-items: center;            /* vertically center items */
+  background-color: transparent; /* subtle gray */
+  border-radius: 0rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+#top-bar h1 {
+  margin-top: 3rem;
+  font-weight: bold;
+  font-size: 5rem;
+}
+
+#top-bar .actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+/* Main container for the page content */
+.page-container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  animation: foregroundFadeIn 0.8s ease-out forwards;
+}
+
+/* Main title of the page */
+.main-title {
+  text-align: center;
+  font-size: 4rem;
+  margin-top: 0;
+  margin-bottom: 3rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Grid layout for the three main sections */
+.about-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Common card styling for all sections */
+.details-card {
+  background-color: rgb(42, 42, 42, 0.35);
+  padding: 2rem;
+  border-radius: 3rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.details-card:hover {
+  transform: translateY(-4px);
+  background-color: rgb(58, 58, 58, 0.7);
+  border-color: rgba(3, 80, 162, 0.8);
+  box-shadow: 0 6px 12px rgba(3, 80, 162, 0.6);
+  cursor: default; /* Cards are not links, so use default cursor */
+}
+
+.details-card h2 {
+  margin-top: 0;
+  font-size: 3rem;
+  color: #23d5ab; /* Accent color for titles */
+  border-bottom: 2px solid rgba(3, 80, 162, 0.8);
+  padding-bottom: 0.5rem;
+}
+
+.details-card p {
+  margin: 0.25rem 0;
+  font-size: 1.8rem;
+  line-height: 1.6;
+}
+
+.details-card p strong {
+  color: #ccc;
+  margin-right: 0.8rem;
+}
+
+.details-card img {
+  width: 250px;
+  height: 250px;
+  border-radius: 1.5rem;
+  object-fit: cover;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 1px solid transparent;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  flex-shrink: 0;
+}
+
+.details-card:hover img {
+  border-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162), 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* New styles for side-by-side layout */
+.card-content {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2rem;
+  
+}
+
+.text-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Specific styling for the main track card */
+.track-details h2 {
+  font-size: 3.5rem;
+}
+
+audio {
+  width: 100%;
+  margin-top: 1rem;
+  filter: invert(1) sepia(0.5) saturate(5) hue-rotate(170deg);
+}
+
+/* Back to home link styling */
+.back-link {
+  display: block;
+  font-size: 2.5rem;
+  width: fit-content;
+  margin: 3rem auto 0 auto;
+  padding: 1.5rem 2.5rem;
+  background-color: rgb(42, 42, 42, 0.35);
+  border-radius: 3rem;
+  font-weight: bold;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.back-link:hover {
+  background-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162);
+}

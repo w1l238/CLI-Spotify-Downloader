@@ -5,10 +5,21 @@
 /* Body style */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  margin: 2em;
-  background-color: rgb(28, 28, 28);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 2rem 1rem;
+  min-width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  background: linear-gradient(-0deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
+  background-size: 800% 800%;
+  animation: gradient 30s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 h1, h2, h3, text {
@@ -16,20 +27,22 @@ h1, h2, h3, text {
 }
 
 #Title {
-  line-height: 42px;       /* match icon height */
-  display: inline-flex;    /* align children horizontally and vertically */
-  align-items: center;     /* vertically center items inside h1 */
-  gap: 0.3em;              /* space between icon and text */
+  line-height: 42px;    /* match icon height */
+  display: flex;        /* align children horizontally and vertically */
+  flex-grow: 1;         /* Make Title fill horizontal space */
+  align-items: center;  /* vertically center items inside h1 */
+  gap: 0.3em;           /* space between icon and text */
 }
 
 #Title-icon {
   display: inline-block;
-  fill: rgb(3, 80, 162);
+  fill: white;
   width: 84px;
   height: 84px;
-  background-color: transparent;
+  padding: 0.2rem;
+  margin-top: 10px;
   border: 0;
-  border-radius: 3rem;
+  border-radius: 5rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -43,34 +56,36 @@ h1, h2, h3, text {
 
 #top-bar {
   display: flex;                  /* activate flex layout */
+  padding: 0rem 1rem 0rem 1rem;
   align-items: center;            /* vertically center items */
-  justify-content: space-between; /* push h2 left and button right */
-  padding: 0.5rem 1rem;           /* optional padding */
-  background-color: transparent;  /* or your desired bg */
+  background-color: transparent; /* subtle gray */
+  border-radius: 0rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 
-#top-bar h2 {
-  margin: 0;
+#top-bar h1 {
+  margin-top: 3rem;
   font-weight: bold;
-  font-size: 1.5rem;
+  font-size: 5rem;
 }
 
 
 /* Text input style */
 input {
-  display: block;
-  margin-right: 1rem;
+  flex: 1;
+  min-width: 0; /* Prevents input from overflowing flex container */
+  box-sizing: border-box;
   text-align: left;
-  background-color: rgba(55, 55, 55, 0.9); /* subtle gray */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
+  background-color: rgba(55, 55, 55, 0.35);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
   color: white;
-  border-radius: 1rem;
+  border-radius: 5rem;
   border: 0px;
-  padding: 8px 1rem 8px 1rem;
-  font-size: medium;
+  padding: 1.75rem 2.5rem;
+  font-size: 2.5rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  
 }
 
 input:focus {
@@ -92,26 +107,26 @@ input:focus {
 /* Bottom row of the text input */
 #bottom-row {
   display: flex;
+  gap: 1rem;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  width: 100%;
   max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-top: 5%;
+  margin: 5% auto 1rem auto;
 }
 
 /* Download button style */
 button.btn-download {
+  flex-shrink: 0;
   background-color: transparent;
   fill: white;
-  background-color: transparent;
-  fill: white;
-  border-radius: 1rem;
+  border-radius: 5rem;
   border: 0px;
-  height: 40px;
-  width: 40px;
+  height: 84px;
+  width: 84px;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.5rem;
+  box-sizing: border-box;
 }
 
 button.btn-download:hover {
@@ -142,20 +157,19 @@ button.btn-download:hover {
 }
 
 #terminal {
-  width: 800px;              /* Make it smaller, adjust as needed */
+  width: 100%;              /* Make it responsive */
+  max-width: 800px;
   height: 400px;             /* Adjust height as needed */
-  border-radius: 0px;       /* Rounded corners */
+  border-radius: 1rem;       /* Rounded corners */
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08); /* Optional, for depth */
   background: black;       /* Optional: custom background color */
-  margin: 0 auto;            /* Center horizontally */
-  white-space: pre-wrap; /* Wrap long lines, respect whitespace */
-  word-break: break-word; /* Break long words if necessary */
+  margin: 2rem auto;            /* Center horizontally */
 }
 
 /* To make terminal rounded (also do so for #terminal) */
 .xterm-viewport, .xterm-screen canvas, .xterm {
-  border-radius: 0px !important;
+  border-radius: 1rem !important;
 }
 
 /* Error flash message styling */
@@ -174,18 +188,6 @@ button.btn-download:hover {
   margin-bottom: 10px;
 }
 
-.xterm .xterm-viewport {
-  overflow-x: hidden !important;    /* Hide horizontal scroll in viewport */
-  white-space: pre-wrap !important; /* Enable line wrapping */
-  word-break: break-word !important; /* Wrap long words */
-}
-
-/* Optional: to ensure canvases don’t overflow */
-.xterm-screen canvas {
-  max-width: 100% !important;
-}
-
-
 #import-container {
   display: flex;
   width: fit-content;
@@ -197,10 +199,12 @@ button.btn-download:hover {
   display: block;
   text-align: center;
   margin: 1rem auto;
+  font-size: 3rem;
   padding-bottom: 1rem;
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  border-radius: 1rem;
-  padding: 6px 1rem 6px 1rem;
+  border: 0;
+  border-radius: 5rem;
+  padding: 1rem 2rem 1rem 2rem;
+  margin-top: 200px;
 }

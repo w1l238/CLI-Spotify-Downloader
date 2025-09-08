@@ -6,9 +6,21 @@
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   margin: 2em;
-  background-color: rgb(28, 28, 28);
-  max-width: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 2rem 1rem;
   overflow-x: hidden;
+  background: linear-gradient(-0deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
+  background-size: 800% 800%;
+  animation: gradient 30s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 h1, h2, h3, text {
@@ -20,7 +32,7 @@ h2 {
 }
 
 #Title {
-  line-height: 42px;       /* match icon height */
+  line-height: 84px;       /* match icon height */
   display: inline-flex;    /* align children horizontally and vertically */
   align-items: center;     /* vertically center items inside h1 */
   gap: 0.3em;              /* space between icon and text */
@@ -28,21 +40,22 @@ h2 {
 
 #Title-icon {
   display: inline-block;
-  fill: rgb(3, 80, 162);
-  width: 42px;
-  height: 42px;
-  background-color: transparent;
+  fill: white;
+  width: 84px;
+  height: 84px;
+  margin-top: 10px;
   border: 0;
-  border-radius: 2rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 5rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 #Title-icon:hover {
-  background-color: rgb(3, 80, 162);
-  box-shadow: 0 0 8px rgb(3, 80, 162);
+  background-color: rgb(3, 80, 162);   /* solid blue accent */
+  border-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
+  fill: white;                        /* keep svg white on hover */
+  color: white;
 }
-
 
 #top-bar {
   display: flex;                  /* activate flex layout */
@@ -50,6 +63,7 @@ h2 {
   justify-content: space-between; /* push h2 left and button right */
   padding: 0.5rem 1rem;           /* optional padding */
   background-color: transparent;  /* or your desired bg */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 #top-bar h2 {
@@ -102,10 +116,12 @@ button:hover, button:focus {
   display: block;
   text-align: center;
   margin: 1rem auto;
+  font-size: 3rem;
   padding-bottom: 1rem;
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  border-radius: 1rem;
-  padding: 6px 1rem 6px 1rem;
+  border: 0;
+  border-radius: 5rem;
+  padding: 1rem 2rem 1rem 2rem;
+  margin-top: 200px;
 }

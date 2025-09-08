@@ -5,10 +5,18 @@
 /* Body style */
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: rgb(28, 28, 28);
   max-width: 100%;
   overflow-x: hidden;
-  margin: 0rem;
+  margin: 2rem;
+  background: linear-gradient(-45deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
+  background-size: 400% 400%;
+  animation: gradient 30s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 h1, h2, h3, text {
@@ -18,28 +26,26 @@ h1, h2, h3, text {
 button {
   background-color: rgb(42, 42, 42);
   box-sizing: border-box; /* include padding/border in width */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #Title {
-  line-height: 42px;    /* match icon height */
-  display: flex;        /* align children horizontally and vertically */
-  flex-grow: 1;         /* Make Title fill horizontal space */
-  align-items: center;  /* vertically center items inside h1 */
-  gap: 0.3em;           /* space between icon and text */
+  line-height: 42px;       /* match icon height */
+  display: inline-flex;    /* align children horizontally and vertically */
+  flex-grow: 1;
+  align-items: center;     /* vertically center items inside h1 */
+  gap: 0.3em;              /* space between icon and text */
 }
-
 
 #Title-icon {
   display: inline-block;
-  fill: rgb(3, 80, 162);
+  fill: white;
   width: 84px;
   height: 84px;
-  background-color: transparent;
+  padding: 0.2rem;
   border: 0;
-  border-radius: 3rem;
+  border-radius: 5rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  margin-top: 10px;
 }
 
 #Title-icon:hover {
@@ -52,11 +58,11 @@ button {
 
 #top-bar {
   display: flex;                  /* activate flex layout */
-  padding: 0rem 1rem 0rem 1rem;
+  padding: 0.5rem 1rem;
   align-items: center;            /* vertically center items */
-  background-color: rgba(40, 40, 40, 0.8); /* subtle gray */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
+  background-color: transparent; /* subtle gray */
   border-radius: 0rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 #top-bar h1 {
@@ -74,14 +80,15 @@ button {
 }
 
 #top-bar button {
-  background-color: rgb(42, 42, 42);
+  background-color: rgb(42, 42, 42, 0.35);
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.5);
   border-radius: 5rem;
   padding: 0.5rem;
 }
 
 #top-bar .actions svg {
-  height: 84px;
-  width: 84px;
+  height: 72px;
+  width: 72px;
   fill: white;
 }
 
@@ -91,9 +98,9 @@ input {
   margin-left: auto;
   margin-right: auto;
   text-align: left;
-  background-color: rgba(55, 55, 55, 0.9); /* subtle gray */
+  background-color: rgba(55, 55, 55, 0.35);    /* subtle gray */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* subtle light border */
   color: white;
   border-radius: 1rem;
   border: 0px;
@@ -154,24 +161,23 @@ form#import_Form {
 
 /* Search button style */
 button.btn-search {
-  display: flex;               /* use flexbox for alignment */
-  justify-content: center;     /* center content horizontally */
-  align-items: center;         /* center content vertically */
-  gap: 0.5rem;                 /* space between text and SVG */
-  width: auto;                 /* allow button width to adjust for text */
-  min-width: 96px;             /* keep minimum size for tap area */
+  display: flex;                    /* use flexbox for alignment */
+  justify-content: center;          /* center content horizontally */
+  align-items: center;              /* center content vertically */
+  gap: 0.5rem;                      /* space between text and SVG */
+  width: auto;                      /* allow button width to adjust for text */
+  min-width: 96px;                  /* keep minimum size for tap area */
   height: 96px;
-  padding: 4rem 2rem 4rem 1.5rem;             /* horizontal padding for comfortable spacing */
-  border-radius: 5rem;         /* rounded pill shape to better fit text + icon */
+  padding: 4rem 0rem 4rem 1.5rem;   /* horizontal padding for comfortable spacing */
+  border-radius: 5rem;              /* rounded pill shape to better fit text + icon */
+  background-color: transparent;
   cursor: pointer;
   border: 0;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  font-size: 3.5rem;           /* adjust font size for readability */
+  font-size: 3.5rem;                /* adjust font size for readability */
   color: white;
   font-weight: 600;
-  margin: 5rem auto 0 auto;
-
-  color: white;
+  margin: 0;
   outline: none;
 }
 
@@ -197,6 +203,41 @@ button.btn-import:hover, button.btn-settings:hover {
   box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
   fill: white;                        /* keep svg white on hover */
   color: white;
+}
+
+/* Browse button */
+.btn-browse {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 3.5rem;
+  font-weight: 600;
+  border: 0;
+  margin: 0;
+  background-color: transparent;
+  border-radius: 5rem;
+  padding: 4rem 2rem;
+  height: 96px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}.btn-browse:hover {
+  background-color: rgb(3, 80, 162);   /* solid blue accent */
+  border-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Container for search and browse buttons */
+.button-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 5rem;
+  background-color: rgb(42, 42, 42, 0.35);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
+  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
+  border-radius: 5rem;
 }
 
 /* Import button top right */
