@@ -20,7 +20,8 @@
         <div id="ul-frame">
           <ul>
           {% for track in tracks %}
-            <li>
+            <a href="{{ url_for('about', track_id=track.track_id) }}" style="text-decoration: none; color: inherit;"">
+              <li>
               <img src="{{ track.artwork }}" alt="Album artwork for {{ track.song }}">
               <div class="track-info">
                 <strong>{{ track.song }}</strong>
@@ -41,6 +42,8 @@
                 </div>
               </div>
             </li>
+            </a>
+            
           {% endfor %}
           </ul>
         </div>  

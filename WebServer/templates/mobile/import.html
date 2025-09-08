@@ -29,18 +29,29 @@
   <div class="terminal-wrapper">
     <div id="terminal"></div>
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/terminal_style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/terminal_style.css') }}" />
+    
 
     <script>
+      // Instantiate the FitAddon
+      const fitAddon = new FitAddon.FitAddon();
+
       const term = new Terminal({
         cursorBlink: false,
         disableStdin: true,
-        cursorStyle: 'block',
-        cols: 80
+        cursorStyle: 'block'
       });
+
+      // Load the addon into the terminal
+      term.loadAddon(fitAddon);
+
       term.open(document.getElementById('terminal'));
+
+      // Fit the terminal to the container size
+      fitAddon.fit();
 
       const socket = io();
 
@@ -101,20 +112,17 @@
     </script>
 
   </div>
-  
-
-
-    <div id="messages">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <ul>
+  <div id="messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
           {% for category, message in messages %}
             <li class="{{ category }}">{{ message }}</li>
           {% endfor %}
-          </ul>
-        {% endif %}
-      {% endwith %}
-    </div>
+        </ul>
+      {% endif %}
+    {% endwith %}
+  </div>
   
   
   </body>
