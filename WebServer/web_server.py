@@ -110,7 +110,8 @@ def search_spotify_song(access_token, song_name, artist_name, limit):
             "artist": ", ".join(artist["name"] for artist in track["artists"]),
             "album": track["album"]["name"],
             "url": track["external_urls"]["spotify"],
-            "artwork": albumn_artwork_url
+            "artwork": albumn_artwork_url,
+            "track_id": track["id"]
         }
         track_list.append(track_info) # Append to dictionary array
     # Print that the song was found
@@ -180,7 +181,7 @@ def download_spotify_url(spotify_url, output_folder):
         pass
 
 
-    # Local FFmpeg path in VENV (as spotdl doesn't place it correctly)
+    # Local FFmpeg path in VENV (as spotdl doesn't place it correctly when downloading it)
     ffmpeg_path = "ENTER_PATH_HERE"
 
     # Spotdl's command to download a song using Spotify's song url
@@ -389,6 +390,36 @@ def get_category_playlists(access_token, category_id, country_code="US", limit=2
         
     return None
 
+def get_track_details(access_token, track_id):
+    """Gets detailed information for a single track."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/tracks/{track_id}"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    print(f"Failed to get track details: {response.status_code} {response.text}")
+    return None
+
+def get_album_details(access_token, album_id):
+    """Gets detailed information for a single album."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/albums/{album_id}"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    print(f"Failed to get album details: {response.status_code} {response.text}")
+    return None
+
+def get_artist_details(access_token, artist_id):
+    """Gets detailed information for a single artist."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/artists/{artist_id}"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    print(f"Failed to get artist details: {response.status_code} {response.text}")
+    return None
+
 #====================
 # App Route Functions
 #====================
@@ -396,7 +427,7 @@ def get_category_playlists(access_token, category_id, country_code="US", limit=2
 # Backend logic for root page (index.html)
 @app.route("/", methods=["GET", "POST"])
 def index():
-    
+
     #  Added mobile template html path based on device's User Agent
     ua_string = request.headers.get('User-Agent', '')
     user_agent = parse(ua_string)
@@ -816,7 +847,59 @@ def browse():
         browse_categories=category_data
     )
 
+@app.route('/about/<track_id>', methods=["GET", "POST"])
+def about(track_id=None):
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        template = "mobile/about.html"
+    else:
+        template = "about.html"
 
+    # Load env variables
+    load_dotenv(override=True)
+
+    # Spotify API Client Credentials
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+
+    # Generate the token
+    token = generate_token(CLIENT_ID, CLIENT_SECRET)
+        
+    if not token:
+        flash("Unable to acquire token. Please check API credentials.", "error")
+        return redirect(url_for('index'))
+
+    # Fetch track details
+    track_details = get_track_details(token, track_id)
+
+    if not track_details:
+        flash("Could not find details for this track.", "error")
+        return redirect(url_for('index'))
+
+    # Extract album and artist IDs
+    album_id = track_details.get('album', {}).get('id')
+    artist_ids = [artist.get('id') for artist in track_details.get('artists', [])]
+    primary_artist_id = artist_ids[0] if artist_ids else None
+
+    # Fetch album and artist details
+    album_details = None
+    if album_id:
+        album_details = get_album_details(token, album_id)
+
+    artist_details = None
+    if primary_artist_id:
+        artist_details = get_artist_details(token, primary_artist_id)
+
+    # Combine all data to pass to the template
+    about_data = {
+        'track': track_details,
+        'album': album_details,
+        'artist': artist_details
+    }
+
+    return render_template(template, data=about_data)
 
 #=================
 # Socket IO routes
