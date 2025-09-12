@@ -4,9 +4,14 @@ This is the dev branch for CLI-Spotify-Downloader. Current changes that are in p
 - [x] yt-dlp fallback
 - [x] Web Server (Work in progress...)
 - [x] Updated install scripts for linux
+- [x] Song Info Page
+- [x] Album Page
+- [ ] Artist Page
 - [ ] Add windows install script
 
+
 ## Issues
+NOTE: Current implementation requires manual intervention in web_server.py (backend) to specify ffmpeg's full path. Variable name: ffmpeg_path
 Currently (as of 8/5/25) SpotDL is unable to download songs.
 YT-DLP is the fallback and requires ffmpeg to download songs correctly. Below are the steps to add ffmpeg:
 
