@@ -19,7 +19,9 @@
         <div class="about-grid">
             {% if data.artist %}
             <div class="details-card artist-details">
-                <h2>{{ data.artist.name }}</h2>
+                <h2>
+                    <a href="{{ data.artist.external_urls.spotify }}" target="_blank" rel="noopener noreferrer">{{ data.artist.name }}</a>
+                </h2>
                 <div class="card-content">
                     {% if data.artist.images and data.artist.images[0] %}
                         <img src="{{ data.artist.images[0].url }}" alt="Artist Image">
@@ -44,7 +46,7 @@
                     <div class="text-content">
                         <p><strong>Artist(s):</strong> {{ data.track.artists | map(attribute='name') | join(', ') }}</p>
                         {% if data.album %}
-                            <p><strong>Album:</strong> {{ data.album.name }}</p>
+                            <p><strong>Album:</strong> <a href="{{ url_for('album_page', album_id=data.album.id) }}">{{ data.album.name }}</a></p>
                             <p><strong>Release Date:</strong> {{ data.album.release_date }}</p>
                             <p><strong>Total Tracks:</strong> {{ data.album.total_tracks }}</p>
                             <p><strong>Label:</strong> {{ data.album.label }}</p>
