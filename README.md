@@ -2,8 +2,10 @@
 This is the dev branch for CLI-Spotify-Downloader. Current changes that are in place for this branch include:
 
 - [x] yt-dlp fallback
-- [x] Web Server (Work in progress...)
 - [x] Updated install scripts for linux
+- [ ] Add windows install script
+
+Web Server Features (Work in progress)
 - [x] Search Page
 - [x] Results Page
 - [x] Settings Page
@@ -12,7 +14,6 @@ This is the dev branch for CLI-Spotify-Downloader. Current changes that are in p
 - [x] Song Info Page
 - [x] Album Page
 - [ ] Artist Page
-- [ ] Add windows install script
 
 
 ## Issues
