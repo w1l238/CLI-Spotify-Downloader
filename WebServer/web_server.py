@@ -182,7 +182,7 @@ def download_spotify_url(spotify_url, output_folder):
 
 
     # Local FFmpeg path in VENV (as spotdl doesn't place it correctly when downloading it)
-    ffmpeg_path = "ENTER_PATH_HERE"
+    ffmpeg_path = "C:\\Users\\w1l\\dev\\CLI-Spotify-Downloader\\venv\\Scripts\\ffmpeg.exe"
 
     # Spotdl's command to download a song using Spotify's song url
     command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
@@ -340,10 +340,6 @@ def parse_json_file(file_path):
         data = json.load(f)
     return data['download_path'], [(s['song_name'], s['artist_name']) for s in data['songs']]
 
-#====================
-# App Route Functions
-#====================
-
 # Function that gets new releases from spotify's API to display for the browse feature
 def get_new_releases(access_token, country_code="US", limit=20):
     """Gets a list of new album releases on Spotify."""
@@ -410,6 +406,21 @@ def get_album_details(access_token, album_id):
     print(f"Failed to get album details: {response.status_code} {response.text}")
     return None
 
+def get_album_tracks(access_token, album_id):
+    """Gets all tracks from a Spotify album, handling pagination."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/albums/{album_id}/tracks"
+    tracks = []
+    while url:
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"Failed to get album tracks: {response.status_code} {response.text}")
+            return None
+        data = response.json()
+        tracks.extend(data.get('items', []))
+        url = data.get('next')
+    return tracks
+
 def get_artist_details(access_token, artist_id):
     """Gets detailed information for a single artist."""
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -419,6 +430,34 @@ def get_artist_details(access_token, artist_id):
         return response.json()
     print(f"Failed to get artist details: {response.status_code} {response.text}")
     return None
+
+# Function to get a playlist name, cover image, and description
+def get_playlist_details(access_token, playlist_id):
+    """Gets metadata for a specific playlist."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    print(f"Failed to get playlist details: {response.status_code} {response.text}")
+    return None
+
+# Function to get a playlist's tracks (All of them for a list view)
+def get_playlist_tracks(access_token, playlist_id):
+    """Gets all tracks from a Spotify playlist, handling pagination."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    tracks = []
+    while url:
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"Failed to get playlist tracks: {response.status_code} {response.text}")
+            return None
+        data = response.json()
+        tracks.extend(data.get('items', []))
+        url = data.get('next')  # Get URL for the next page of results, or None if it's the last page
+    return tracks
+    
 
 #====================
 # App Route Functions
@@ -815,12 +854,14 @@ def browse():
             release_url = release.get("external_urls", {}).get("spotify")
             images = release.get("images", [])
             artwork_url = images[0]["url"] if images else None
+            album_id = release.get("id")
 
             release_data.append({
                 "album": album_name,
                 "artist": artists,
                 "url": release_url,
-                "artwork": artwork_url
+                "artwork": artwork_url,
+                "album_id": album_id
             })
     else:
         flash("Could not fetch new releases.", "error")
@@ -900,6 +941,104 @@ def about(track_id=None):
     }
 
     return render_template(template, data=about_data)
+
+@app.route('/playlist/<playlist_id>')
+def playlist_page(playlist_id=None):
+    # Detect device for mobile/desktop template
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    template = "mobile/playlist.html" if user_agent.is_mobile else "playlist.html"
+
+    # Load ENV and get API token
+    load_dotenv(override=True)
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    token = generate_token(CLIENT_ID, CLIENT_SECRET)
+    if not token:
+        flash("Unable to acquire token. Please check API credentials.", "error")
+        return redirect(url_for('index'))
+
+    # Fetch playlist details and all tracks
+    playlist_details = get_playlist_details(token, playlist_id)
+    raw_tracks = get_playlist_tracks(token, playlist_id)
+
+    if not playlist_details or not raw_tracks:
+        flash("Unable to retrieve playlist information.", "error")
+        return render_template(template) # Render HTML to show error
+
+    # Process track data into clean format for HTML
+    track_list = []
+    for item in raw_tracks:
+        track = item.get('track')
+        if not track:
+            continue # Skip the rest
+
+        images = track["album"].get("images", [])
+        artwork_url = images[0]["url"] if images else None
+        track_info = {
+            "song": track["name"],
+            "artist": ", ".join(artist["name"] for artist in track["artists"]),
+            "album": track["album"]["name"],
+            "url": track["external_urls"]["spotify"],
+            "artwork": artwork_url,
+            "track_id": track["id"]
+        }
+        track_list.append(track_info)
+    
+    return render_template(template, playlist=playlist_details, tracks=track_list)
+
+@app.route('/album/<album_id>')
+def album_page(album_id):
+    # Detect device for mobile/desktop template
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    # Re-use playlist.html as requested
+    template = "mobile/playlist.html" if user_agent.is_mobile else "playlist.html"
+
+    # Standard procedure to get API token
+    load_dotenv(override=True)
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    token = generate_token(CLIENT_ID, CLIENT_SECRET)
+    if not token:
+        flash("Unable to acquire token. Please check API credentials.", "error")
+        return redirect(url_for('index'))
+
+    # Fetch album details and all its tracks
+    album_details = get_album_details(token, album_id)
+    raw_tracks = get_album_tracks(token, album_id)
+
+    if not album_details or not raw_tracks:
+        flash("Could not retrieve album information.", "error")
+        return redirect(url_for('browse'))
+
+    # Create a "pseudo-playlist" object from album details to fit the playlist.html template
+    pseudo_playlist_object = {
+        "name": album_details.get("name"),
+        "images": album_details.get("images", []),
+        "description": f"Album by {', '.join(artist['name'] for artist in album_details.get('artists', []))}",
+        "owner": {"display_name": album_details.get("label", "N/A")},
+        "tracks": {"total": album_details.get("total_tracks", 0)}
+    }
+
+    # Process the raw track data. Album tracks are "simplified" objects.
+    track_list = []
+    album_artwork = album_details.get("images", [{}])[0].get("url") if album_details.get("images") else None
+    for track in raw_tracks:
+        if not track:
+            continue
+        
+        track_info = {
+            "song": track.get("name"),
+            "artist": ", ".join(artist["name"] for artist in track.get("artists", [])),
+            "album": album_details.get("name"), # Add album name from parent
+            "url": track.get("external_urls", {}).get("spotify"),
+            "artwork": album_artwork, # Use the same album artwork for all tracks
+            "track_id": track.get("id")
+        }
+        track_list.append(track_info)
+
+    return render_template(template, playlist=pseudo_playlist_object, tracks=track_list)
 
 #=================
 # Socket IO routes
