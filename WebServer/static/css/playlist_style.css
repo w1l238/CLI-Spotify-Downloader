@@ -211,6 +211,49 @@ li:hover img {
 /* ul { border: 2px solid green; }
 li { border: 2px solid blue; } */
 
+/* New styles for the playlist header */
+.playlist-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2rem;
+    margin: 2rem auto 0rem auto;
+    padding: 0 2rem;
+    max-width: 80%;
+    color: white;
+}
+
+.playlist-header img {
+    width: 100%;
+    height: 100%;
+    max-width: 400px;
+    object-fit: cover;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.playlist-header .playlist-info h1 {
+    margin-top: 0;
+    font-size: 2.5rem;
+}
+
+.playlist-header .playlist-info p {
+    color: white;
+    margin: 0.5rem 0;
+}
+
+
+/* Ensure download form button is clickable over the link */
+.download-form button {
+    position: relative;
+    z-index: 10;
+}
+
+h1, p {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
 /* Back to home link styling */
 .back-link {
   display: block;

@@ -118,7 +118,7 @@ input {
   background-color: rgba(55, 55, 55, 0.35); /* subtle gray */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  color: white;
+  color: white !important;
   border-radius: 2rem;
   border: 0px;
   padding: 12px 1rem 12px 1rem;

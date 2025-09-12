@@ -136,6 +136,11 @@ button {
   padding-bottom: 0.5rem;
 }
 
+.details-card h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .details-card p {
   margin: 0.25rem 0;
   font-size: 1.8rem;
@@ -175,6 +180,17 @@ button {
 .text-content {
   display: flex;
   flex-direction: column;
+}
+
+.text-content a {
+  color: #a7f5e3;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.text-content a:hover {
+  color: #23d5ab;
+  text-decoration: underline;
 }
 
 /* Specific styling for the main track card */
