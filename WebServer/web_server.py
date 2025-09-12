@@ -182,7 +182,7 @@ def download_spotify_url(spotify_url, output_folder):
 
 
     # Local FFmpeg path in VENV (as spotdl doesn't place it correctly when downloading it)
-    ffmpeg_path = "C:\\Users\\w1l\\dev\\CLI-Spotify-Downloader\\venv\\Scripts\\ffmpeg.exe"
+    ffmpeg_path = "ENTER_FFMPEG_PATH_HERE"
 
     # Spotdl's command to download a song using Spotify's song url
     command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
