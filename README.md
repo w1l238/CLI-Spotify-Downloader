@@ -18,6 +18,7 @@ Web Server Features (Work in progress)
 
 ## Issues
 NOTE: Current implementation requires manual intervention in web_server.py (backend) to specify ffmpeg's full path. Variable name: ffmpeg_path
+
 Currently (as of 8/5/25) SpotDL is unable to download songs.
 YT-DLP is the fallback and requires ffmpeg to download songs correctly. Below are the steps to add ffmpeg:
 
