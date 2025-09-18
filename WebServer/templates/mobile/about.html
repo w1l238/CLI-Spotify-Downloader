@@ -14,7 +14,7 @@
     </h1>
   </div>
 <div class="page-container">
-    <h1 class="main-title">About</h1>
+    <h1 class="main-title"></h1>
     {% if data %}
         <div class="about-grid">
             {% if data.artist %}
@@ -38,7 +38,7 @@
             {% endif %}
 
             <div class="details-card track-details">
-                <h2>{{ data.track.name }}</h2>
+                <a href="{{ url_for('album_page', album_id=data.album.id) }}"><h2>{{ data.track.name }}</h2></a>
                 <div class="card-content">
                     {% if data.album and data.album.images[0] %}
                         <img src="{{ data.album.images[0].url }}" alt="Album Art">
