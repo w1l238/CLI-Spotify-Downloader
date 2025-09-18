@@ -168,13 +168,13 @@ button.btn-search {
   width: auto;                      /* allow button width to adjust for text */
   min-width: 96px;                  /* keep minimum size for tap area */
   height: 96px;
-  padding: 4rem 0rem 4rem 1.5rem;   /* horizontal padding for comfortable spacing */
-  border-radius: 5rem;              /* rounded pill shape to better fit text + icon */
+  padding: 4rem 1.5rem 4rem 1.5rem;   
+  border-radius: 5rem;              
   background-color: transparent;
   cursor: pointer;
   border: 0;
   transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  font-size: 3.5rem;                /* adjust font size for readability */
+  font-size: 3.5rem;                
   color: white;
   font-weight: 600;
   margin: 0;
@@ -232,7 +232,6 @@ button.btn-import:hover, button.btn-settings:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
   margin-top: 5rem;
   background-color: rgb(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
