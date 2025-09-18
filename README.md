@@ -4,6 +4,7 @@ This is the dev branch for CLI-Spotify-Downloader. Current changes that are in p
 - [x] yt-dlp fallback
 - [x] Updated install scripts for linux
 - [ ] Add windows install script
+- [ ] Dockerizing Web Server
 
 Web Server Features (Work in progress)
 - [x] Search Page
@@ -15,16 +16,13 @@ Web Server Features (Work in progress)
 - [x] Album Page
 - [ ] Artist Page
 
-
 ## Issues
-NOTE: Current implementation requires manual intervention in web_server.py (backend) to specify ffmpeg's full path. Variable name: ffmpeg_path
-
 Currently (as of 8/5/25) SpotDL is unable to download songs.
-YT-DLP is the fallback and requires ffmpeg to download songs correctly. Below are the steps to add ffmpeg:
+YT-DLP is the fallback and requires ffmpeg to download songs correctly. Below are the steps to add ffmpeg so that the program can recongize it:
 
 
 ### If installed via setup script
-If you ran the 'setup.sh' script ffmpeg is installed in the default path
+If you ran the 'setup.sh' script ffmpeg is placed in the default path by spotdl
 
 Linux:
     
@@ -34,7 +32,7 @@ Windows:
     
     C:\user\$USERNAME\.spotdl\ffpmeg.exe
 
-Move the file and place into your venv
+Move the file and place into your venv (this is where the program looks for ffmpeg)
 
 Path on Linux:
 
