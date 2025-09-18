@@ -75,7 +75,7 @@ The results page only shows the top 5 songs searched (via song name and artist) 
 The about page just shows a little more about the song. Most likely will be changed up visually next.
 
 ## Album Page
-![Album Page](/images/Playlist.png)
+![Album Page](/images/Album.png)
 The album page just lists all songs within the selected album with quick acess to download a selected song.
 
 ## Download Page
