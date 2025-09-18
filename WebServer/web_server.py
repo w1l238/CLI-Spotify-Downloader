@@ -19,7 +19,7 @@ from spotdl import Spotdl
 from urllib.parse import quote_plus
 from flask_socketio import SocketIO, emit
 from flask import Flask, request, render_template, redirect, url_for, flash, get_flashed_messages, jsonify, session
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv, set_key
 from user_agents import parse
 import requests
 import subprocess
@@ -27,6 +27,7 @@ import os
 import re
 import sys
 import json
+import secrets
 
 # Flask app setup
 app = Flask(__name__)
@@ -40,6 +41,30 @@ socketio = SocketIO(app)
 #=================
 # Helper Functions
 #=================
+
+# Create a randomly generated secret key to be stored in the env file.
+# Only runs if the env file doesn't have a secret key already in use.
+def generate_secret_key():
+    dotenv_path = find_dotenv()
+    load_dotenv(dotenv_path)
+
+    # Check if the env file already has a key already
+    if not os.getenv("FLASK_SECRET"):
+        print("[ENV] FLASK_SECRET not found. Generating a new key and saving to .env...")
+
+        # Generate a new, secure key 32 chars long
+        secret_key = secrets.token_hex(32)
+
+        # Set the key in memory
+        os.environ["FLASK_SECRET"] = secret_key
+
+        # Save it to the .env file
+        set_key(dotenv_path, "FLASK_SECRET", secret_key)
+
+        print("[ENV] FLASK_SECRET saved to .env!")
+    else:
+        print("[ENV] FLASK_SECRET found. Using exsisting key.")
+
 
 # Get API token using Client ID and Client Secret
 # If found return the access token
@@ -111,7 +136,8 @@ def search_spotify_song(access_token, song_name, artist_name, limit):
             "album": track["album"]["name"],
             "url": track["external_urls"]["spotify"],
             "artwork": albumn_artwork_url,
-            "track_id": track["id"]
+            "track_id": track["id"],
+            "album_id": track["album"]["id"]
         }
         track_list.append(track_info) # Append to dictionary array
     # Print that the song was found
@@ -181,8 +207,16 @@ def download_spotify_url(spotify_url, output_folder):
         pass
 
 
-    # Local FFmpeg path in VENV (as spotdl doesn't place it correctly when downloading it)
-    ffmpeg_path = "ENTER_FFMPEG_PATH_HERE"
+   # Local FFmpeg path in VENV (as spotdl doesn't place it correctly)
+    print("[OS] Scanning Device Operating System...")
+    if os.name == 'nt': # Windows
+        print("[OS] Device running Windows.")
+        ffmpeg_path = os.path.join(current_dir, 'venv', 'Scripts', 'ffmpeg.exe')
+        print(f"FFMPEG PATH: {ffmpeg_path}")
+    elif os.name != 'nt': # Default to linux if not windows
+        print("[OS] Device running UNIX")
+        ffmpeg_path = os.path.join(current_dir, 'venv', 'bin', 'ffmpeg')
+        print(f"FFMPEG PATH: {ffmpeg_path}")
 
     # Spotdl's command to download a song using Spotify's song url
     command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
@@ -223,15 +257,6 @@ def download_spotify_url(spotify_url, output_folder):
             if yt_URL:
                 fallback_url = yt_URL.group(1)
                 print(f"\nUsing fallback URL: {fallback_url}")
-
-                # Local FFmpeg path in VENV (as spotdl doesn't place it correctly)
-                print("[OS] Scanning Device Operating System...")
-                if os.name == 'nt': # Windows
-                    print("[OS] Device running Windows.")
-                    ffmpeg_path = os.path.join(current_dir, 'venv', 'Scripts', 'ffmpeg.exe')
-                elif os.name != 'nt': # Default to linux if not windows
-                    print("[OS] Device running UNIX")
-                    ffmpeg_path = os.path.join(current_dir, 'venv', 'bin', 'ffmpeg')
 
                 # Check if ffmpeg path is valid
                 if os.path.isfile(ffmpeg_path) or os.access(ffmpeg_path, os.X_OK):
@@ -1018,7 +1043,8 @@ def album_page(album_id):
         "images": album_details.get("images", []),
         "description": f"Album by {', '.join(artist['name'] for artist in album_details.get('artists', []))}",
         "owner": {"display_name": album_details.get("label", "N/A")},
-        "tracks": {"total": album_details.get("total_tracks", 0)}
+        "tracks": {"total": album_details.get("total_tracks", 0)},
+        "release_date": album_details.get("release_date")
     }
 
     # Process the raw track data. Album tracks are "simplified" objects.
@@ -1114,4 +1140,7 @@ def clear_songs():
 
 
 if __name__ == "__main__":
+    # Generate secret key if there is not one
+    generate_secret_key()
+    # Run the backend on localhost at port 5000
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
