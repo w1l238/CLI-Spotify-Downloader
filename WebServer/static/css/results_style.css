@@ -230,3 +230,16 @@ li { border: 2px solid blue; } */
   background-color: rgb(3, 80, 162);
   box-shadow: 0 0 8px rgb(3, 80, 162);
 }
+
+.album a {
+  text-decoration: none;
+  color: #23d5ab;
+}
+
+.album a:hover{ 
+  text-decoration: underline;
+}
+
+.track-info strong {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}

@@ -180,5 +180,10 @@ button.btn-submit:hover {
   color: #55ff55;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 10px;
+  margin-top: 2rem;
+}
+  
+  /* To hide dot on the error/success message */
+ul {
+   list-style-type: none;
 }

@@ -273,3 +273,7 @@ h1, p {
   background-color: rgb(3, 80, 162);
   box-shadow: 0 0 8px rgb(3, 80, 162);
 }
+
+.track-info strong {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
