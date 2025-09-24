@@ -47,3 +47,12 @@ The album page just lists all songs within the selected album with quick acess t
 
 ## Download Page
 The download page is just like the import page. It shows a terminal with the output of the download process. Currently you can download only one song at a time (if you want to download more than one use the import feature).
+
+### Upcoming Additions
+
+In the works:
+- [ ] Artist Page
+- [ ] Pages of results
+
+Not in the works:
+- [ ] Soundcloud varient
