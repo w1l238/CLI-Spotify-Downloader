@@ -1,8 +1,12 @@
 # Web Branch
 This is the web version of branch for CLI-Spotify-Downloader. This branch builds off the dev branch to create a web viewer for Spotify Downloader. Please read dev's & main's readme.md for the required knowledge to deploy this.
 
+
 # Web Version of Spotify Downloader
 The web version of spotify downloader has the same download process as the CLI verison. But with a few extra features.
+
+### Use Cases
+There are many use cases for this type of program. I personally use it on my plex server and download songs to the path plex looks for. There are many other ways to utilize this I'd imagine.
 
 ## Home Page
 ![Home Page](images/Home.png)
