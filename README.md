@@ -3,18 +3,7 @@ This is the dev branch for CLI-Spotify-Downloader. Current changes that are in p
 
 - [x] yt-dlp fallback
 - [x] Updated install scripts for linux
-- [ ] Add windows install script
-- [ ] Dockerizing Web Server
-
-Web Server Features (Work in progress)
-- [x] Search Page
-- [x] Results Page
-- [x] Settings Page
-- [x] Import Page
-- [x] Download Page
-- [x] Song Info Page
-- [x] Album Page
-- [ ] Artist Page
+- [x] Add windows install script
 
 ## Issues
 Currently (as of 8/5/25) SpotDL is unable to download songs.
@@ -46,41 +35,6 @@ Path on Windows:
 If you didn't use the 'setup.sh' script you need to install ffmpeg using this command and move into the folder specified above
 
     spotdl --download-ffmpeg
-
-# Web Version of Spotify Downloader
-The web version of spotify downloader has the same download process as the CLI verison. But with a few extra features.
-
-## Home Page
-![Home Page](images/Home.png)
-The Home Page is fairly simple.
-
-## Settings Page
-![Settings Page](images/Settings.png)
-The settings page is the front end way of modifying your .env file. Your spotify API keys go here as well as your download path of the device running the web server.
-
-## Import Page
-![Import Page](images/Import.png)
-The import page works by inputting your json file's path (of the device running web server) into the text box above and it will start downloading multiple songs with output via the terminal below.
-
-## Results Page
-![Results Page](images/Results.png)
-The results page only shows the top 5 songs searched (via song name and artist) with quick actions like downlading the song, or you can view the about song by clicking the card or click the album name for the album page.
-
-### Things to add here
-- [ ] Page Feature to browse further
-
-
-## About Page
-![About Page](images/About.png)
-The about page just shows a little more about the song. Most likely will be changed up visually next.
-
-## Album Page
-![Album Page](/images/Album.png)
-The album page just lists all songs within the selected album with quick acess to download a selected song.
-
-## Download Page
-The download page is just like the import page. It shows a terminal with the output of the download process. Currently you can download only one song at a time (if you want to download more than one use the import feature).
-
 
 # CLI-Spotify-Downloader
 This python script downloads songs to your machine in a folder structure (shown below). This script is great for automating the download process but also the organization of songs, artists, and albums using the folder structure.
