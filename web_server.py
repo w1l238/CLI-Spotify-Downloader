@@ -85,7 +85,7 @@ def generate_token(CLIENT_ID, CLIENT_SECRET):
 # Searches spotify song after taking name and artist as input with spotify API access token generated from generate token function
 # If song is found return the track artist, album name, track name, and track url
 # If song not found return 'None'
-def search_spotify_song(access_token, song_name, artist_name, limit):
+def search_spotify_song(access_token, song_name, artist_name, limit, offset):
     # Pass access token for auth using spotify API
     headers = {
         "Authorization": f"Bearer {access_token}"
@@ -96,7 +96,8 @@ def search_spotify_song(access_token, song_name, artist_name, limit):
     params = {
         "q": query,
         "type": "track",
-        "limit": limit
+        "limit": limit,
+        "offset": offset
     }
     # Spotify API endpoint
     search_url = "https://api.spotify.com/v1/search"
@@ -107,18 +108,20 @@ def search_spotify_song(access_token, song_name, artist_name, limit):
     # If the response fails return 'None'
     if response.status_code != 200:
         print(f"Spotify API search failed: {response.status_code} {response.text}")
-        return []
+        return [], 0
 
     # Store results in json
     results = response.json()
     
     # Grab the needed data from the json
-    tracks = results.get("tracks", {}).get("items", [])
+    track_results = results.get("tracks", {})
+    tracks = track_results.get("items", [])
+    total_tracks = track_results.get("total", 0)
     
     # If the needed data isn't found in the json from the API return 'None'
     if not tracks:
         print(f"No matching tracks found for '{song_name}' by '{artist_name}'.")
-        return []
+        return [], 0
 
     # Store each part of the json in different variables
     # Track Name
@@ -144,7 +147,7 @@ def search_spotify_song(access_token, song_name, artist_name, limit):
     print(f"Found {len(track_list)} tracks for '{song_name}' by '{artist_name}'.")
 
     # Return the data
-    return track_list
+    return track_list, total_tracks
 
 # Set the destination path using the path the user requests
 # Return the newly made folder or return the already valid folder
@@ -190,7 +193,19 @@ def sanitize_filename(name):
 # Falls back to yt-dlp if spotdl is unable to download due to audio provider error
 # If spotfl throws error then output that an error occured
 def download_spotify_url(spotify_url, output_folder):
-        
+    def stream_output(process): # Stream command output to terminal
+        """Helper to stream subprocess output to stdout and socketio."""
+        all_output = ""
+        if process.stdout:
+            for line in iter(process.stdout.readline, ''):
+                print(line, end='')
+                socketio.emit('stdout', {'data': line})
+                socketio.sleep(0)
+                all_output += line
+            process.stdout.close()
+        return_code = process.wait()
+        return return_code, all_output
+
     # Returns the folder where this script is stored
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -212,151 +227,237 @@ def download_spotify_url(spotify_url, output_folder):
     if os.name == 'nt': # Windows
         print("[OS] Device running Windows.")
         ffmpeg_path = os.path.join(current_dir, 'venv', 'Scripts', 'ffmpeg.exe')
-        print(f"FFMPEG PATH: {ffmpeg_path}")
-    elif os.name != 'nt': # Default to linux if not windows
+    else: # Default to Unix OS
         print("[OS] Device running UNIX")
         ffmpeg_path = os.path.join(current_dir, 'venv', 'bin', 'ffmpeg')
-        print(f"FFMPEG PATH: {ffmpeg_path}")
+        
+    # Print ffmpeg's path for debugging use
+    print(f"FFMPEG PATH: {ffmpeg_path}")
 
     # Spotdl's command to download a song using Spotify's song url
-    command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
+    spotdl_command = [sys.executable, "-u", "-m", "spotdl", "--ffmpeg", ffmpeg_path, spotify_url]
     
     # Set the output folder for spotdl to use
     if output_folder:
-        command.extend(["--output", output_folder])
+        spotdl_command.extend(["--output", output_folder])
     
+    spotdl_timed_out = False
+    all_output = ""
+
     # Call spotdl to download the song
     try:
-        # spotdl has it's own output here showing a progress bar and if it downloaded successfully etc.
-        # Using popen to capture stdout to pass to front end web viewer
-        spotdl_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        
+        socketio.emit('stdout', {'data': f"Running command: {' '.join(spotdl_command)}\n"}) # Output spotdl_command in terminal is running
 
-        all_output = ""
+        # Some reason spotdl gets hung and cannot proceed to fallback to YT-DLP. Implementing a timeout for spotdl command
+        #spotdl_process = subprocess.Popen(spotdl_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True)
+        #return_code, all_output = stream_output(spotdl_process)
 
-        # Output stdout to terminal and variable
+        #if return_code == 0 and "Download" in all_output:
+        #    socketio.emit('download_complete', {'message': 'Download completed successfully!'})
+        #    return
+
+        result = subprocess.run(spotdl_command, capture_output=True, text=True, timeout=15)
+
+        all_output = result.stdout + result.stderr
+        print(all_output)
+        socketio.emit('stdout', {'data': all_output})
+
+        if result.returncode == 0 and "Download" in all_output:
+            socketio.emit('download_complete', {'message': 'Download completed successfully with spotdl!'})
+            return
+
+    except subprocess.TimeoutExpired:
+        spotdl_timed_out = True
+        timeout_msg = "[WARN] spotdl process timed out. Attempting to fallback to yt-dlp...\n"
+        print(timeout_msg)
+        socketio.emit('stdout', {'data': timeout_msg})
+    except Exception as e:
+        error_msg = f"An unexpected error occurred with spotdl: {e}\n"
+        print(error_msg)
+        socketio.emit('stdout', {'data': error_msg})
+
+    # Fallback to yt-dlp if spotdl failed, timed out, or had an audio provider error, etc.
+    yt_URL_match = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output)
+    if yt_URL_match or spotdl_timed_out:
+        fallback_url = yt_URL_match.group(1) if yt_URL_match else f"ytsearch1:\"{spotify_url}\""
+        fallback_reason = "AudioProviderError" if yt_URL_match else "spotdl timeout"
+
+        fallback_msg = f"\n[INFO] spotdl failed due to {fallback_reason}. Using yt-dlp fallback using URL: {fallback_url}\n"
+        print(fallback_msg)
+        socketio.emit('stdout', {'data': fallback_msg})
+
+        # Get audio format from .env, default to mp3
+        audio_format = os.getenv("AUDIO_FORMAT", "mp3")
+        
+        # Print audio format for debugging
+        #print(f"Audio Format Selection is '{audio_format}'")
+
+        # Run the yt-dlp command with the parameters
+        yt_dlp_command = [
+            "yt-dlp",
+            "--extract-audio", "-x",
+            "--audio-format", audio_format,
+            "--format", "bestaudio",
+            "-P", output_folder,
+            fallback_url
+        ]
+        
+        # Check if ffmpeg path is valid and use it
+        # If not valid then warn the user the process might fail
+        if os.path.isfile(ffmpeg_path) or os.access(ffmpeg_path, os.X_OK):
+            yt_dlp_command.extend(["--ffmpeg-location", ffmpeg_path])
+        else:
+            warning_msg = "[WARN] ffmpeg not found or not executable. Conversion might fail.\n"
+            print(warning_msg)
+            socketio.emit('stdout', {'data': warning_msg})
+
         try:
-            # read and show the command's stdout in real time
-            for line in spotdl_process.stdout:
-                # emit it back to the client (front end)
-                print(line, end='')
-                socketio.emit('stdout', {'data': line})
-                socketio.sleep(0)
-                all_output += line
+            socketio.emit('stdout', {'data':f"Running command: {' '.join(yt_dlp_command)}\n"})
+            yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True)
+            return_code, yt_output = stream_output(yt_process)
+
+            if return_code == 0:
+                socketio.emit('download_complete', {'message': 'Download completed successfully with yt-dlp!'})
+            else:
+                socketio.emit('stdout', {'data': f"yt-dlp fallback failed with code {return_code}.\n"})
+        except Exception as e:
+            socketio.emit('download_error', {'message': f"Error during yt-dlp fallback: {e}"})
+    else:
+        socketio.emit('stdout', {'data': "spotdl failed and no fallback URL was found. Download aborted. Please refresh the page to try again.\n"})
+        
+        
+        
+        # COMMENTED OUT CURRENT WORKING CODE TO TRY NEW IMPLEMENTATION ABOVE
+        
+    #     # spotdl has it's own output here showing a progress bar and if it downloaded successfully etc.
+    #     # Using popen to capture stdout to pass to front end web viewer
+    #     spotdl_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+    #     # Output stdout to terminal and variable
+    #     try:
+    #         # read and show the command's stdout in real time
+    #         for line in spotdl_process.stdout:
+    #             # emit it back to the client (front end)
+    #             print(line, end='')
+    #             socketio.emit('stdout', {'data': line})
+    #             socketio.sleep(0)
+    #             all_output += line
                 
 
-            # Close the stream
-            spotdl_process.stdout.close()
+    #         # Close the stream
+    #         spotdl_process.stdout.close()
 
-            # Get the return code
-            return_code = spotdl_process.wait()
+    #         # Get the return code
+    #         return_code = spotdl_process.wait()
 
-            # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
-            # if "AudioProviderError" in all_output:
-            yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
+    #         # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
+    #         # if "AudioProviderError" in all_output:
+    #         yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
 
-            if yt_URL:
-                fallback_url = yt_URL.group(1)
-                print(f"\nUsing fallback URL: {fallback_url}")
+    #         if yt_URL:
+    #             fallback_url = yt_URL.group(1)
+    #             print(f"\nUsing fallback URL: {fallback_url}")
 
-                # Check if ffmpeg path is valid
-                if os.path.isfile(ffmpeg_path) or os.access(ffmpeg_path, os.X_OK):
-                    # Download using yt-dlp and convert to mp3 using ffmpeg
-                    yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3", "--ffmpeg-location", ffmpeg_path]
-                else:
-                    # Warn user that ffmpeg isn't found
-                    print("[WARN] ffmpeg package not found. Continuing to download without ffmpeg...")
+    #             # Check if ffmpeg path is valid
+    #             if os.path.isfile(ffmpeg_path) or os.access(ffmpeg_path, os.X_OK):
+    #                 # Download using yt-dlp and convert to mp3 using ffmpeg
+    #                 yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3", "--ffmpeg-location", ffmpeg_path]
+    #             else:
+    #                 # Warn user that ffmpeg isn't found
+    #                 print("[WARN] ffmpeg package not found. Continuing to download without ffmpeg...")
            
-                    # Download using yt-dlp and attempt to convert to mp3 without ffmpeg 
-                    yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3"]
+    #                 # Download using yt-dlp and attempt to convert to mp3 without ffmpeg 
+    #                 yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3"]
                     
-                # Call yt-dlp and stream the output to the wbe viewer
-                yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    #             # Call yt-dlp and stream the output to the wbe viewer
+    #             yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
 
-                # read and show the command's stdout in real time
-                for line in yt_process.stdout:
-                    # emit it back to the client (front end)
-                    print(line, end='')
-                    socketio.emit('stdout', {'data': line})
-                    socketio.sleep(0)
+    #             # read and show the command's stdout in real time
+    #             for line in yt_process.stdout:
+    #                 # emit it back to the client (front end)
+    #                 print(line, end='')
+    #                 socketio.emit('stdout', {'data': line})
+    #                 socketio.sleep(0)
 
-                # Close the stream
-                yt_process.stdout.close()
+    #             # Close the stream
+    #             yt_process.stdout.close()
             
-                # Get the return code
-                return_code = yt_process.wait()
-            # Get the return code
-            return_code = spotdl_process.wait()
+    #             # Get the return code
+    #             return_code = yt_process.wait()
+    #         # Get the return code
+    #         return_code = spotdl_process.wait()
 
-            # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
-            # if "AudioProviderError" in all_output:
-            yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
+    #         # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
+    #         # if "AudioProviderError" in all_output:
+    #         yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
 
-            if yt_URL:
-                fallback_url = yt_URL.group(1)
-                print(f"\nUsing fallback URL: {fallback_url}")
+    #         if yt_URL:
+    #             fallback_url = yt_URL.group(1)
+    #             print(f"\nUsing fallback URL: {fallback_url}")
 
-                # Download using yt-dlp and convert to mp3 using ffmpeg
-                yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "--ffmpeg-location", ffmpeg_path, "-x", "--audio-format", "mp3", ]
+    #             # Download using yt-dlp and convert to mp3 using ffmpeg
+    #             yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "--ffmpeg-location", ffmpeg_path, "-x", "--audio-format", "mp3", ]
                     
-                # Call yt-dlp and stream the output to the wbe viewer
-                yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    #             # Call yt-dlp and stream the output to the wbe viewer
+    #             yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
 
-                # read and show the command's stdout in real time
-                for line in yt_process.stdout:
-                    # emit it back to the client (front end)
-                    print(line, end='')
-                    socketio.emit('stdout', {'data': line})
-                    socketio.sleep(0)
+    #             # read and show the command's stdout in real time
+    #             for line in yt_process.stdout:
+    #                 # emit it back to the client (front end)
+    #                 print(line, end='')
+    #                 socketio.emit('stdout', {'data': line})
+    #                 socketio.sleep(0)
 
-                # Close the stream
-                yt_process.stdout.close()
+    #             # Close the stream
+    #             yt_process.stdout.close()
             
-                # Get the return code
-                return_code = yt_process.wait()
-            # Get the return code
-            return_code = spotdl_process.wait()
+    #             # Get the return code
+    #             return_code = yt_process.wait()
+    #         # Get the return code
+    #         return_code = spotdl_process.wait()
 
-            # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
-            # if "AudioProviderError" in all_output:
-            yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
+    #         # # If Spotdl encounters a audioprovider error then download using yt-dlp using yt URL
+    #         # if "AudioProviderError" in all_output:
+    #         yt_URL = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output) # Extract the URL
 
-            if yt_URL:
-                fallback_url = yt_URL.group(1)
-                print(f"\nUsing fallback URL: {fallback_url}")
+    #         if yt_URL:
+    #             fallback_url = yt_URL.group(1)
+    #             print(f"\nUsing fallback URL: {fallback_url}")
 
-                # Download using yt-dlp and convert to mp3 using ffmpeg
-                yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3", "--ffmpeg-location", ffmpeg_path]
+    #             # Download using yt-dlp and convert to mp3 using ffmpeg
+    #             yt_dlp_command = ["yt-dlp", fallback_url, "-P", output_folder, "-x", "--audio-format", "mp3", "--ffmpeg-location", ffmpeg_path]
                     
-                # Call yt-dlp and stream the output to the wbe viewer
-                yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    #             # Call yt-dlp and stream the output to the wbe viewer
+    #             yt_process = subprocess.Popen(yt_dlp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
 
-                # read and show the command's stdout in real time
-                for line in yt_process.stdout:
-                    # emit it back to the client (front end)
-                    print(line, end='')
-                    socketio.emit('stdout', {'data': line})
-                    socketio.sleep(0)
+    #             # read and show the command's stdout in real time
+    #             for line in yt_process.stdout:
+    #                 # emit it back to the client (front end)
+    #                 print(line, end='')
+    #                 socketio.emit('stdout', {'data': line})
+    #                 socketio.sleep(0)
 
-                # Close the stream
-                yt_process.stdout.close()
+    #             # Close the stream
+    #             yt_process.stdout.close()
             
-                # Get the return code
-                return_code = yt_process.wait()
+    #             # Get the return code
+    #             return_code = yt_process.wait()
         
-            # If the call fails show that to the front end
-            if return_code != 0:
-                # emit a error message to web viewer client
-                socketio.emit('stdout', {'data': f"Download failed with code {return_code}."})
-            else:
-                socketio.emit('download_complete', {'message': 'Download completed successfully!'})
+    #         # If the call fails show that to the front end
+    #         if return_code != 0:
+    #             # emit a error message to web viewer client
+    #             socketio.emit('stdout', {'data': f"Download failed with code {return_code}."})
+    #         else:
+    #             socketio.emit('download_complete', {'message': 'Download completed successfully!'})
 
-        except Exception as e:
-            socketio.emit('download_error', {'message': f"Error during download: {e}"})
+    #     except Exception as e:
+    #         socketio.emit('download_error', {'message': f"Error during download: {e}"})
 
-    # If the calling of the command throws an error print it
-    except subprocess.CalledProcessError as e: 
-        print(f"Error during download: {e}")
-        flash("Error during download. Please try again.")
+    # # If the calling of the command throws an error print it
+    # except subprocess.CalledProcessError as e: 
+    #     print(f"Error during download: {e}")
+    #     flash("Error during download. Please try again.")
 
 # Imports and parses json file given the file's path
 # Returns download path and each song in the json file
@@ -523,45 +624,102 @@ def index():
         song_name = request.form.get("song_Name")
         artist_name = request.form.get("artist_Name")
         
+        # COMMENTING OUT WORKING CODE FOR NEW IMPLEMENTATION
 
-        # Try to search for the song
-        try:
-            # Generate the token
-            token = generate_token(CLIENT_ID,CLIENT_SECRET)
+        # # Try to search for the song
+        # try:
+        #     # Generate the token
+        #     token = generate_token(CLIENT_ID,CLIENT_SECRET)
                 
-            if not token:
-                flash("Unable to acquire token. Please check API credentials.", "error")
-                return render_template(template)
+        #     if not token:
+        #         flash("Unable to acquire token. Please check API credentials.", "error")
+        #         return render_template(template)
 
-            # Search for the spotify song
-            song_data = search_spotify_song(token, song_name, artist_name, 5) # USE ONE FOR TESTING. WILL DEFAULT TO 5
+        #     # Search for the spotify song
+        #     song_data = search_spotify_song(token, song_name, artist_name, 5) # USE ONE FOR TESTING. WILL DEFAULT TO 5
                 
 
-            if not song_data or len(song_data) == 0:
-                flash("No songs found. Please try a different title or artist.", "error")
-                return redirect(url_for('index'))
+        #     if not song_data or len(song_data) == 0:
+        #         flash("No songs found. Please try a different title or artist.", "error")
+        #         return redirect(url_for('index'))
 
-            valid_tracks = [track for track in song_data if track.get("url")]
-            if not valid_tracks:
-                flash("No valid song URLs found in results.", "error")
-                return redirect(url_for('index'))
+        #     valid_tracks = [track for track in song_data if track.get("url")]
+        #     if not valid_tracks:
+        #         flash("No valid song URLs found in results.", "error")
+        #         return redirect(url_for('index'))
             
-            # Return the data
-            return render_template(result_template, tracks=valid_tracks, query=f"{song_name} by {artist_name}")
+        #     # Return the data
+        #     return render_template(result_template, tracks=valid_tracks, query=f"{song_name} by {artist_name}")
         
-        # If the song is unable to be searched for then print error and loop back to main menu
-        except Exception as e:
-            # Optionally log exception e somewhere for debugging
-            flash("Error: Please check your API keys and try again.", "error")
-            flash(f"Error Message Code: {e}")
-            return redirect(url_for('index'))
+        # # If the song is unable to be searched for then print error and loop back to main menu
+        # except Exception as e:
+        #     # Optionally log exception e somewhere for debugging
+        #     flash("Error: Please check your API keys and try again.", "error")
+        #     flash(f"Error Message Code: {e}")
+        #     return redirect(url_for('index'))
 
-        # Else throw error and tell user and return
-        else:
-            flash("Song not found. Please try a different title or artist.", "error")
-            return redirect(url_for('index'))
+        # # Else throw error and tell user and return
+        # else:
+        #     flash("Song not found. Please try a different title or artist.", "error")
+        #     return redirect(url_for('index'))
+
+        return redirect(url_for('search_results', song_name=song_name, artist_name=artist_name))
 
     return render_template(template)
+    
+# Search page route logic
+@app.route('/search')
+def search_results():
+    # Get search parameters from URL
+    #  Added mobile template html path based on device's User Agent
+    ua_string = request.headers.get('User-Agent', '')
+    user_agent = parse(ua_string)
+    if user_agent.is_mobile:
+        result_template = "mobile/results.html"
+    else:
+        result_template = "results.html"
+
+
+    song_name = request.args.get('song_name', '')
+    artist_name = request.args.get('artist_name', '')
+    page = request.args.get('page', 1, type=int)
+    limit = 5
+    offset = (page - 1) * limit
+
+    # Load env variables
+    load_dotenv(override=True)
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+
+    try:
+        token = generate_token(CLIENT_ID, CLIENT_SECRET)
+        if not token:
+            flash("Unable to acquire token. Please check API credentials.", "error")
+            return redirect(url_for('index'))
+
+        song_data, total_tracks = search_spotify_song(token, song_name, artist_name, limit, offset)
+
+        if not song_data:
+            flash("No songs found for this query.", "error")
+            return redirect(url_for('index'))
+
+        total_pages = (total_tracks + limit - 1) // limit
+
+        return render_template(
+            result_template,
+            tracks=song_data,
+            query=f"{song_name} by {artist_name}",
+            song_name=song_name,
+            artist_name=artist_name,
+            current_page=page,
+            total_pages=total_pages
+        )
+
+    except Exception as e:
+        flash(f"An error occurred during search: {e}", "error")
+        return redirect(url_for('index'))
+
+
 
 # Import page logic for import.html
 @app.route('/import', methods=["GET", "POST"])
@@ -616,7 +774,7 @@ def import_page():
                 return render_template("import_page.html")
 
             try:
-                song_data = search_spotify_song(token, song_name, artist_name, 1)
+                song_data, _ = search_spotify_song(token, song_name, artist_name, 1)
                 if not song_data:
                     flash(f"No data found for {song_name} by {artist_name}.")
                     continue
@@ -772,7 +930,8 @@ def settings_page():
     CLIENT_ID = os.getenv("CLIENT_ID")
     CLIENT_SECRET = os.getenv("CLIENT_SECRET")
     DWN_PATH = os.getenv("DWN_PATH")
-    print(f"ID and Secret: {CLIENT_ID}, {CLIENT_SECRET}, Download Path: {DWN_PATH}")
+    AUDIO_FORMAT = os.getenv("AUDIO_FORMAT", "mp3") # Default to mp3 if not set
+    print(f"ID and Secret: {CLIENT_ID}, {CLIENT_SECRET}, Download Path: {DWN_PATH}, Audio Format: {AUDIO_FORMAT}")
 
     # When user hits save button
     if request.method == "POST":
@@ -780,6 +939,7 @@ def settings_page():
         form_id = request.form.get("client-id")
         form_secret = request.form.get("client-secret")
         form_dwn = request.form.get("dwn_path")
+        form_audio_format = request.form.get("audio_format")
 
         print(f"Form's ID: {form_id}")
         print(f"Form Secret: {form_secret}")
@@ -798,6 +958,10 @@ def settings_page():
         if form_dwn and form_dwn != DWN_PATH:
             new_values["DWN_PATH"] = form_dwn
             updated = True
+        if form_audio_format and form_audio_format != AUDIO_FORMAT:
+            new_values["AUDIO_FORMAT"] = form_audio_format
+            updated = True
+
 
         if updated:
             # Read existing lines from .env
@@ -832,13 +996,15 @@ def settings_page():
         CLIENT_ID = form_id
         CLIENT_SECRET = form_secret
         DWN_PATH = form_dwn
+        AUDIO_FORMAT = form_audio_format
 
     # Render template, passing current values to pre-fill inputs
     return render_template(
         template,
         client_id=CLIENT_ID,
         client_secret=CLIENT_SECRET,
-        dwn_path=DWN_PATH
+        dwn_path=DWN_PATH,
+        audio_format=AUDIO_FORMAT
     )
 
 
@@ -1087,7 +1253,7 @@ def handle_start_download(data):
         download_path = data.get("download_path")
         
         # Print artist, album, and song
-        print(f"Artist: {artist}, Album: {album}, Song: {song}")
+        print(f"[SONG] Artist: {artist}, Album: {album}, Song: {song}")
 
         # Start download using socketio
         socketio.start_background_task(download_spotify_url, track_url, download_path)
