@@ -192,7 +192,7 @@ def sanitize_filename(name):
 # Falls back to yt-dlp if spotdl is unable to download due to audio provider error
 # Falls back to yt-dlp if spotdl is unable to download due to audio provider error
 # If spotfl throws error then output that an error occured
-def download_spotify_url(spotify_url, output_folder):
+def download_spotify_url(spotify_url, output_folder, song_details=None):
     def stream_output(process): # Stream command output to terminal
         """Helper to stream subprocess output to stdout and socketio."""
         all_output = ""
@@ -280,7 +280,14 @@ def download_spotify_url(spotify_url, output_folder):
     # Fallback to yt-dlp if spotdl failed, timed out, or had an audio provider error, etc.
     yt_URL_match = re.search(r"AudioProviderError:.*-\s*(https?://\S+)", all_output)
     if yt_URL_match or spotdl_timed_out:
-        fallback_url = yt_URL_match.group(1) if yt_URL_match else f"ytsearch1:\"{spotify_url}\""
+        if yt_URL_match:
+            fallback_url = yt_URL_match.group(1)
+        elif song_details:
+            # Construct a better search query if song details are available
+            fallback_url = f"ytsearch1:\"{song_details.get('song', '')} {song_details.get('artist', '')}\""
+        else:
+            # Fallback to the original method if no details are passed
+            fallback_url = f"ytsearch1:\"{spotify_url}\""
         fallback_reason = "AudioProviderError" if yt_URL_match else "spotdl timeout"
 
         fallback_msg = f"\n[INFO] spotdl failed due to {fallback_reason}. Using yt-dlp fallback using URL: {fallback_url}\n"
@@ -1256,7 +1263,7 @@ def handle_start_download(data):
         print(f"[SONG] Artist: {artist}, Album: {album}, Song: {song}")
 
         # Start download using socketio
-        socketio.start_background_task(download_spotify_url, track_url, download_path)
+        socketio.start_background_task(download_spotify_url, track_url, download_path, song_details=data)
         
         # Emit download task started
         flash("Download task started, please wait...", "message")
@@ -1275,7 +1282,7 @@ def handle_loop_download(data):
     download_path = data.get("download_path")
 
     # print(f"Track URL passed in and Download_path is: {track_url} && {download_path}")
-    socketio.start_background_task(download_spotify_url, track_url, download_path)
+    socketio.start_background_task(download_spotify_url, track_url, download_path, song_details=data)
 
 
 # ==========
