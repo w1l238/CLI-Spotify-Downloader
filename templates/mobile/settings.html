@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>CLI-Spotify-Downloader Web</title>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/Spotify/Spotify_Logo_White.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/settings_style.css') }}" />
 </head>
 <body>
@@ -13,22 +14,35 @@
       </a> Downloader
     </h1>
     </div>
-  </div>
-    <form id="import_Form" method="post">
-      <div id="settings-frame">
-        <h2 id="title-text">Settings</h2>
-            <div class="spotify-frame">
-                <h3 class="input-header">Spotify Client ID</h3>
-                <input name="client-id" type="text" size="25" placeholder="Enter Client ID" required value="{{ client_id }}"/>
-                <h3 class="input-header">Spotify Client Secret</h3>
-                <input name="client-secret" type="text" size="25" placeholder="Enter Client Secret" required value="{{ client_secret }}"/>
-                <h3 class="input-header">Download Path (On Server)</h3>
-                <input name="dwn_path" type="text" size="25" placeholder="Enter Download Path" required value="{{ dwn_path }}"/>
+    <div class="settings-container">
+        <h1>Settings</h1>
+
+        <form method="POST" action="{{ url_for('settings_page') }}">
+            <div class="form-group">
+                <label for="client-id">Spotify Client ID</label>
+                <input type="text" id="client-id" name="client-id" value="{{ client_id or '' }}" placeholder="Enter your Spotify Client ID">
             </div>
-            <button type="submit" class="btn-submit">Save</button>
-      </div>
-        <div id="settings-input"></div>
-    </form>
+            <div class="form-group">
+                <label for="client-secret">Spotify Client Secret</label>
+                <input type="password" id="client-secret" name="client-secret" value="{{ client_secret or '' }}" placeholder="Enter your Spotify Client Secret">
+            </div>
+            <div class="form-group">
+                <label for="dwn_path">Download Path</label>
+                <input type="text" id="dwn_path" name="dwn_path" value="{{ dwn_path or '' }}" placeholder="e.g., C:\Users\YourUser\Music">
+            </div>
+            <div class="form-group">
+                <label for="audio_format">Audio Format</label>
+                <select id="audio_format" name="audio_format">
+                    <option value="mp3" {% if audio_format == 'mp3' %}selected{% endif %}>MP3</option>
+                    <option value="flac" {% if audio_format == 'flac' %}selected{% endif %}>FLAC</option>
+                    <option value="m4a" {% if audio_format == 'm4a' %}selected{% endif %}>M4A</option>
+                    <option value="opus" {% if audio_format == 'opus' %}selected{% endif %}>Opus</option>
+                    <option value="wav" {% if audio_format == 'wav' %}selected{% endif %}>WAV</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-save">Save Settings</button>
+        </form>
+    </div>
 
     <div id="messages">
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -41,6 +55,7 @@
         {% endif %}
       {% endwith %}
     </div>
+    <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
 
 </body>
 </html>
