@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>About - {{ data.track.name }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/Spotify/Spotify_Logo_White.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/about_style.css') }}">
 </head>
 <body>
@@ -13,44 +14,27 @@
       </a> Downloader
     </h1>
   </div>
-<div class="page-container">
-    <h1 class="main-title"></h1>
-    {% if data %}
-        <div class="about-grid">
-            {% if data.artist %}
-            <div class="details-card artist-details">
-                <h2>
-                    <a href="{{ data.artist.external_urls.spotify }}" target="_blank" rel="noopener noreferrer">{{ data.artist.name }}</a>
-                </h2>
-                <div class="card-content">
-                    {% if data.artist.images and data.artist.images[0] %}
-                        <img src="{{ data.artist.images[0].url }}" alt="Artist Image">
-                    {% endif %}
-                    <div class="text-content">
-                        <p><strong>Followers:</strong> {{"{:,}".format(data.artist.followers.total)}}</p>
-                        {% if data.artist.genres %}
-                        <p><strong>Genres:</strong> {{ data.artist.genres | join(', ') }}</p>
-                        {% endif %}
-                        <p><strong>Popularity:</strong> {{ data.artist.popularity }} / 100</p>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
 
+{% if data %}
+    <div class="hero-banner" style="background-image: url('{{ data.artist.images[0].url if data.artist and data.artist.images}}');">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>{{ data.track.name }}</h1>
+            <h2>by <a href="{{ data.artist.external_urls.spotify }}" target="_blank" rel="noopener noreferrer">{{ data.artist.name }}</a></h2>
+        </div>
+    </div>
+
+    <div class="page-container">
+        <div class="details-grid">
+            <!-- Track Details Card -->
             <div class="details-card track-details">
-                <a href="{{ url_for('album_page', album_id=data.album.id) }}"><h2>{{ data.track.name }}</h2></a>
+                <h3>About the Track</h3>
                 <div class="card-content">
-                    {% if data.album and data.album.images[0] %}
-                        <img src="{{ data.album.images[0].url }}" alt="Album Art">
-                    {% endif %}
+                    <img src="{{ data.album.images[0].url if data.album and data.album.images else '' }}" alt="Album Art">
                     <div class="text-content">
                         <p><strong>Artist(s):</strong> {{ data.track.artists | map(attribute='name') | join(', ') }}</p>
-                        {% if data.album %}
-                            <p><strong>Album:</strong> <a href="{{ url_for('album_page', album_id=data.album.id) }}">{{ data.album.name }}</a></p>
-                            <p><strong>Release Date:</strong> {{ data.album.release_date }}</p>
-                            <p><strong>Total Tracks:</strong> {{ data.album.total_tracks }}</p>
-                            <p><strong>Label:</strong> {{ data.album.label }}</p>
-                        {% endif %}
+                        <p><strong>Album:</strong> <a href="{{ url_for('album_page', album_id=data.album.id) }}">{{ data.album.name }}</a></p>
+                        <p><strong>Release Date:</strong> {{ data.album.release_date }}</p>
                         <p><strong>Duration:</strong> {{ "%.2f"|format(data.track.duration_ms / 60000) }} minutes</p>
                         <p><strong>Popularity:</strong> {{ data.track.popularity }} / 100</p>
                         {% if data.track.preview_url %}
@@ -59,11 +43,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Artist Details Card -->
+            <div class="details-card artist-details">
+                <h3>About the Artist</h3>
+                <div class="card-content">
+                    <div class="text-content">
+                        <p><strong>Followers:</strong> {{"{:,}".format(data.artist.followers.total)}}</p>
+                        {% if data.artist.genres %}
+                            <p><strong>Genres:</strong> {{ data.artist.genres | join(', ') }}</p>
+                        {% endif %}
+                        <p><strong>Popularity:</strong> {{ data.artist.popularity }} / 100</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    {% else %}
-        <p>No data available for this track.</p>
-    {% endif %}
-</div>
+    </div>
+{% else %}
+    <p class="no-data">No data available for this track.</p>
+{% endif %}
+
 <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
 </body>
 </html>
