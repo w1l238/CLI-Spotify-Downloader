@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>CLI-Spotify-Downloader Web</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/Spotify/Spotify_Logo_White.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/style.css') }}" />
 </head>
 <body>
@@ -22,15 +23,15 @@
     </button>
     </div>
   </div>
-    <form id="import_Form" method="post" action="/">
+    <form id="import_Form" method="get" action="{{ url_for('search_results') }}">
       <div id="top-row">
         <div class="input-group">
           <!-- <h3>Name</h3> -->
-          <input name="song_Name" type="text" size="25" placeholder="Enter Song Name" required/>
+          <input name="song_name" type="text" size="25" placeholder="Enter Song Name" required/>
         </div>
         <div class="input-group">
           <!-- <h3>Artist</h3> -->
-          <input name="artist_Name" type="text" size="25" placeholder="Enter Artist Name" required/>
+          <input name="artist_name" type="text" size="25" placeholder="Enter Artist Name" required/>
         </div>
       </div>
       <div class="button-row">
