@@ -1,170 +1,164 @@
-/*  
-* 
-*/
-
 /* Body style */
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  margin: 2em;
-  max-width: 100%;
-  overflow-x: hidden;
-  background: linear-gradient(-45deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
-  background-size: 400% 400%;
-  animation: gradient 30s ease infinite;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 2rem 1rem;
+    min-width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    background: linear-gradient(-0deg, #0350a2, #23a6d5, #23d5ab, #0350a2);
+    background-size: 800% 800%;
+    animation: gradient 30s ease infinite;
+    color: white;
 }
 
 @keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-h1, h2, h3, text {
-  color: white;
+h1 {
+    color: white;
+    text-align: center;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
+/* Top Bar */
 #Title {
-  line-height: 42px;    /* match icon height */
-  display: flex;        /* align children horizontally and vertically */
-  flex-grow: 1;         /* Make Title fill horizontal space */
-  align-items: center;  /* vertically center items inside h1 */
-  gap: 0.3em;           /* space between icon and text */
+    line-height: 42px;
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    gap: 0.3em;
+    font-size: 3rem; /* Smaller for mobile */
 }
 
 #Title-icon {
-  display: inline-block;
-  fill: white;
-  width: 84px;
-  height: 84px;
-  margin-top: 10px;
-  padding: 0.2rem;
-  border: 0;
-  border-radius: 3rem;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    display: inline-block;
+    fill: white;
+    width: 64px; /* Adjusted size */
+    height: 64px;
+    padding: 0.2rem;
+    border: 0;
+    border-radius: 5rem;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #Title-icon:hover {
-  background-color: rgb(3, 80, 162);   /* solid blue accent */
-  border-color: rgb(3, 80, 162);
-  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
-  fill: white;                        /* keep svg white on hover */
-  color: white;
+    background-color: rgb(3, 80, 162);
+    box-shadow: 0 0 8px rgb(3, 80, 162);
 }
 
 #top-bar {
-  display: flex;                  /* activate flex layout */
-  align-items: center;            /* vertically center items */
-  /* push h2 left and button right */
-  padding: 0.5rem 1rem;           /* optional padding */
-  background-color: transparent;  /* or your desired bg */
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    display: flex;
+    padding: 0 1rem;
+    align-items: center;
+    background-color: transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 2rem;
 }
 
-#top-bar h1 {
-  margin-top: 3rem;
-  font-weight: bold;
-  font-size: 5rem;
+/* Settings Container */
+.settings-container {
+    background-color: rgba(42, 42, 42, 0.35);
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    margin: 0 auto;
 }
 
-/* Text input style */
-input {
-  display: inline-flex;
-  margin: 0 auto;
-  text-align: left;
-  background-color: rgba(55, 55, 55, 0.35); /* subtle gray */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
-  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
-  color: white;
-  border-radius: 5rem;
-  font-size: 2rem;
-  border: 0px;
-  padding: 2rem;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+/* Form Elements */
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-input:focus {
-  background-color: rgba(3, 80, 162, 0.7);   /* blue subtle background on focus */
-  box-shadow: 0 0 8px rgba(3, 80, 162, 0.8); /* glowing blue shadow */
-  border-color: rgb(3, 80, 162);
-  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
-  outline: none;
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 1.5rem;
 }
 
-/* Used for centering the form vertically (text input and download button) */
-form {
-  padding-top: 0%;
-  padding-bottom: 0%;
+input[type="text"],
+input[type="password"],
+select {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(55, 55, 55, 0.5);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 1.5rem;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-/* frame for the settings menu */
-#settings-frame {
-  width: 80%;    /* responsive limit for smaller screens */
-  margin: 5rem auto 0 auto;   /* top margin plus horizontal auto margins to center */
-  background-color: rgb(42, 42, 42, 0.35);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  padding: 0.5rem 2rem 2rem 2rem;
-  border-radius: 3rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.45);
-
+input:focus, select:focus {
+    background-color: rgba(3, 80, 162, 0.7);
+    box-shadow: 0 0 8px rgba(3, 80, 162, 0.8);
+    border-color: rgb(3, 80, 162);
+    outline: none;
 }
 
-#title-text {
-  font-size: 3rem;
+select {
+    appearance: none; /* For custom arrow */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5H7z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.5em;
+    padding-right: 3rem;
 }
 
-/* frame for inside the settings menu (for the text/input fields) */
-.spotify-frame {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-  width: 100%;
-  margin-bottom: 5rem;
+/* Save Button */
+.btn-save {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    background-color: #0350a2;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 1rem;
 }
 
-/* Align text above input as center */
-.input-header {
-  text-align: center;
-  margin: 1rem auto 0 auto;
-  font-size: 2.5rem;
+.btn-save:hover {
+    background-color: #23a6d5;
+    box-shadow: 0 0 10px #23a6d5;
 }
 
-/* Save button text */
-button.btn-submit {
-  display: block;
-  margin: 0 auto 2rem auto;
-  margin-top: 1rem;
-  padding: 1.5rem 5rem;
-  font-size: 2.4rem;
-  background-color: rgb(42, 42, 42, 0.35);
-  color: white;
-  border: none;
-  border-radius: 5rem;
-  cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  font-weight: bold;
-}
-
-/* Hover effect for save button */
-button.btn-submit:hover {
-  background-color: rgb(3, 80, 162);   /* solid blue accent */
-  border-color: rgb(3, 80, 162);
-  box-shadow: 0 0 8px rgb(3, 80, 162); /* glowing blue shadow */
-}
-
-
-/* FLASH NOTIFICATIONS CSS */
-.error {
-  color: #ff5555;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 10px;
+/* Flash Messages */
+.message, .error {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 1.2rem;
 }
 
 .message {
-  color: #55ff55;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 10px;
+    background-color: rgba(85, 255, 85, 0.2);
+    color: #55ff55;
+}
+
+.error {
+    background-color: rgba(255, 85, 85, 0.2);
+    color: #ff5555;
+}
+
+/* Back Link */
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 2rem;
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
 }
