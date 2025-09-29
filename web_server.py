@@ -273,6 +273,7 @@ def download_spotify_url(spotify_url, output_folder, song_details=None):
         print(timeout_msg)
         socketio.emit('stdout', {'data': timeout_msg})
     except Exception as e:
+        spotdl_timed_out = True
         error_msg = f"An unexpected error occurred with spotdl: {e}\n"
         print(error_msg)
         socketio.emit('stdout', {'data': error_msg})
@@ -282,13 +283,14 @@ def download_spotify_url(spotify_url, output_folder, song_details=None):
     if yt_URL_match or spotdl_timed_out:
         if yt_URL_match:
             fallback_url = yt_URL_match.group(1)
+            fallback_reason = "spotdl found a match but failed to download"
         elif song_details:
             # Construct a better search query if song details are available
             fallback_url = f"ytsearch1:\"{song_details.get('song', '')} {song_details.get('artist', '')}\""
-        else:
-            # Fallback to the original method if no details are passed
+            fallback_reason = "spotdl timeout"
+        else: # Fallback to the original method if no details are passed
             fallback_url = f"ytsearch1:\"{spotify_url}\""
-        fallback_reason = "AudioProviderError" if yt_URL_match else "spotdl timeout"
+            fallback_reason = "spotdl timeout and no song details"
 
         fallback_msg = f"\n[INFO] spotdl failed due to {fallback_reason}. Using yt-dlp fallback using URL: {fallback_url}\n"
         print(fallback_msg)
@@ -310,6 +312,15 @@ def download_spotify_url(spotify_url, output_folder, song_details=None):
             fallback_url
         ]
         
+        # Add cookies to yt-dlp command if path is specified to bypass 403 errors
+        # Assumes cookies.txt is in the project root.
+        cookies_path = "cookies.txt"
+        if os.path.exists(cookies_path):
+            yt_dlp_command.extend(["--cookies", cookies_path])
+            cookie_msg = f"[INFO] Using cookies file for yt-dlp from: {cookies_path}\n"
+            print(cookie_msg)
+            socketio.emit('stdout', {'data': cookie_msg})
+
         # Check if ffmpeg path is valid and use it
         # If not valid then warn the user the process might fail
         if os.path.isfile(ffmpeg_path) or os.access(ffmpeg_path, os.X_OK):
