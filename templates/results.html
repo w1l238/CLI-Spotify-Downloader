@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>CLI-Spotify-Downloader Web</title>
+    <title>Results for "{{ query }}"</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/Spotify/Spotify_Logo_White.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/results_style.css') }}" />
   </head>
     <body>
@@ -15,7 +16,9 @@
       </div>
       <div id="results-text-container">
         <h3 id="Result-banner">Results for "{{ query }}"</h3>
+        <h4 id="Page-number"> Page {{ current_page }}</h4>
       </div>
+      
         {% if tracks %}
         <div id="ul-frame">
           <ul>
@@ -50,6 +53,15 @@
         {% else %}
           <p>No results found.</p>
         {% endif %}
+        <div class="pagination">
+          {% if current_page > 1 %}
+            <a href="{{ url_for('search_results', song_name=song_name, artist_name=artist_name, page=current_page - 1) }}" class="page-btn">Previous</a>
+          {% endif %}
+        
+          {% if current_page < total_pages %}
+            <a href="{{ url_for('search_results', song_name=song_name, artist_name=artist_name, page=current_page + 1) }}" class="page-btn">Next</a>
+          {% endif %}
+        </div>
         <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
     </body>
 </html>

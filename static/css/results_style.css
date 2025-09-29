@@ -46,7 +46,7 @@ li, #No-Results {
   animation: foregroundFadeIn 0.5s ease forwards;
 }
 
-h1, h2, h3, p {
+h1, h2, h3, h4, p {
   color: white;
 }
 
@@ -62,7 +62,7 @@ h1, h2, h3, p {
 }
 
 #Result-banner {
-  display: inline-block;
+  display: flex;
   background-color: rgba(42, 42, 42, 0.35);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
   border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
@@ -75,6 +75,20 @@ h1, h2, h3, p {
   width: fit-content;
   max-width: 50%;
   margin: 0rem auto 1rem auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#Page-number { 
+  background-color: rgba(42, 42, 42, 0.35);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);   /* soft shadow for depth */
+  border: 1px solid rgba(255, 255, 255, 0.1);  /* subtle light border */
+  border-radius: 1rem;
+  padding: 6px 1rem 6px 1rem;
+  text-align: center;
+  margin:0;
+
 }
 
 #Title {
@@ -242,4 +256,27 @@ li { border: 2px solid blue; } */
 
 .track-info strong {
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem auto;
+}
+
+.page-btn {
+  color: white;
+  background-color: rgba(42, 42, 42, 0.35);
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.page-btn:hover {
+  background-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162);
 }
