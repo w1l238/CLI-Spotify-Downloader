@@ -185,3 +185,26 @@ li:hover img {
 /* For visual border for ul and li to help with centering */
 /* ul { border: 2px solid green; }
 li { border: 2px solid blue; } */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem auto;
+}
+
+.page-btn {
+  color: white;
+  background-color: rgba(42, 42, 42, 0.35);
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.page-btn:hover {
+  background-color: rgb(3, 80, 162);
+  box-shadow: 0 0 8px rgb(3, 80, 162);
+}
